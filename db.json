@@ -1,0 +1,166 @@
+{
+  "categories": [
+    {
+      "id": "cat-cyberpunk",
+      "name": "Cyberpunk",
+      "description": "Futuristic cities, neon lights, and high-tech anime aesthetics."
+    },
+    {
+      "id": "cat-fantasy",
+      "name": "Fantasy",
+      "description": "Magical worlds, floating islands, and mystical scenery."
+    },
+    {
+      "id": "cat-samurai",
+      "name": "Samurai & Historical",
+      "description": "Cinematic historical themes, cherry blossoms, and epic battles."
+    },
+    {
+      "id": "cat-cozy",
+      "name": "Cozy & Lofi",
+      "description": "Warm, relaxing room setups, rain aesthetics, and peaceful vibes."
+    },
+    {
+      "id": "cat-magical",
+      "name": "Magical Nature",
+      "description": "Enchanted forests, glowing flora, and dreamlike environments."
+    },
+    {
+      "id": "cat-mecha",
+      "name": "Sci-Fi & Mecha",
+      "description": "Gundam-inspired battles, futuristic spaceships, and cosmic voyages."
+    }
+  ],
+  "wallpapers": [
+    {
+      "id": "wp-001",
+      "title": "Neon Tokyo Rooftop",
+      "anime": "Cyberpunk: Edgerunners",
+      "categoryId": "cat-cyberpunk",
+      "imageUrl": "/wallpapers/cyberpunk_girl.png",
+      "resolution": "3840x2160",
+      "orientation": "Landscape",
+      "downloads": 1250,
+      "likes": 840,
+      "rating": 4.9,
+      "author": "Antigravity_Art",
+      "description": "A stunning view of a rainy Neo-Tokyo street from a rooftop, featuring a cyberpunk girl with futuristic headphones. Beautiful reflections of pink and blue neon lights.",
+      "featured": true,
+      "createdAt": "2026-05-15T08:30:00Z"
+    },
+    {
+      "id": "wp-002",
+      "title": "Floating Sakura Shrine",
+      "anime": "Original Art",
+      "categoryId": "cat-fantasy",
+      "imageUrl": "/wallpapers/fantasy_landscape.png",
+      "resolution": "1920x1080",
+      "orientation": "Landscape",
+      "downloads": 950,
+      "likes": 620,
+      "rating": 4.7,
+      "author": "PixelDreamer",
+      "description": "An ethereal floating island in the sky featuring a traditional Japanese shrine surrounded by blooming cherry blossom trees under a bright crescent moon.",
+      "featured": true,
+      "createdAt": "2026-05-20T14:15:00Z"
+    },
+    {
+      "id": "wp-003",
+      "title": "Samurai at Sunset",
+      "anime": "Demon Slayer",
+      "categoryId": "cat-samurai",
+      "imageUrl": "/wallpapers/samurai_sunset.png",
+      "resolution": "1920x1080",
+      "orientation": "Landscape",
+      "downloads": 1840,
+      "likes": 1240,
+      "rating": 4.9,
+      "author": "RoninArt",
+      "description": "A cinematic shot of a lone warrior standing on a mountain cliff, watching a crimson sunset. Cherry blossom petals blow gently in the warm golden hour breeze.",
+      "featured": true,
+      "createdAt": "2026-05-25T17:45:00Z"
+    },
+    {
+      "id": "wp-004",
+      "title": "Rainy Lofi Bedroom",
+      "anime": "Original Art",
+      "categoryId": "cat-cozy",
+      "imageUrl": "/wallpapers/cozy_lofi_room.png",
+      "resolution": "1920x1080",
+      "orientation": "Landscape",
+      "downloads": 750,
+      "likes": 480,
+      "rating": 4.6,
+      "author": "ChillBeats",
+      "description": "A cozy, warm-lit study bedroom at night. Raindrops slide down the big window showing a soft cityscape, while a cat sleeps peacefully beside a glowing screen.",
+      "featured": false,
+      "createdAt": "2026-06-01T21:10:00Z"
+    },
+    {
+      "id": "wp-005",
+      "title": "Enchanted Forest River",
+      "anime": "Princess Mononoke",
+      "categoryId": "cat-magical",
+      "imageUrl": "/wallpapers/magical_forest.png",
+      "resolution": "3840x2160",
+      "orientation": "Landscape",
+      "downloads": 620,
+      "likes": 390,
+      "rating": 4.5,
+      "author": "StudioNature",
+      "description": "A mysterious forest path alongside a crystal-clear stream. Magical glowing mushrooms and plants light up the dark forest, with warm sunbeams breaking through the canopy.",
+      "featured": false,
+      "createdAt": "2026-06-05T09:00:00Z"
+    },
+    {
+      "id": "wp-006",
+      "title": "Cosmic Mech Vanguard",
+      "anime": "Mobile Suit Gundam",
+      "categoryId": "cat-mecha",
+      "imageUrl": "/wallpapers/space_mech.png",
+      "resolution": "3840x2160",
+      "orientation": "Landscape",
+      "downloads": 1100,
+      "likes": 730,
+      "rating": 4.8,
+      "author": "GundamFan99",
+      "description": "An epic mecha suit navigating a colorful nebula in outer space, surrounded by celestial dust, distant stars, and trailing bright thruster engines.",
+      "featured": false,
+      "createdAt": "2026-06-08T11:20:00Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "comment-001",
+      "wallpaperId": "wp-001",
+      "author": "OtakuKing",
+      "content": "Wow, this looks absolutely beautiful! The neon reflections on the rainy street are top-notch.",
+      "rating": 5,
+      "createdAt": "2026-05-16T10:00:00Z"
+    },
+    {
+      "id": "comment-002",
+      "wallpaperId": "wp-001",
+      "author": "AnimeLover22",
+      "content": "Fits my 4K screen perfectly. Love the cyberpunk aesthetic!",
+      "rating": 5,
+      "createdAt": "2026-05-17T12:30:00Z"
+    },
+    {
+      "id": "comment-003",
+      "wallpaperId": "wp-002",
+      "author": "ZenGardener",
+      "content": "So peaceful and dreamlike. I set this as my lock screen background immediately.",
+      "rating": 4,
+      "createdAt": "2026-05-21T09:15:00Z"
+    },
+    {
+      "id": "comment-004",
+      "wallpaperId": "wp-003",
+      "author": "ShogunSlayer",
+      "content": "The sunset coloring is legendary. Definitely recommending this to my friends.",
+      "rating": 5,
+      "createdAt": "2026-05-26T18:00:00Z"
+    }
+  ]
+}
