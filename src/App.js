@@ -6,6 +6,9 @@ import HomePage from './pages/HomePage';
 import DetailPage from './pages/DetailPage';
 import FavoritesPage from './pages/FavoritesPage';
 import AdminPage from './pages/AdminPage';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   // Global favorites state initialized from localStorage
@@ -40,52 +43,64 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="d-flex flex-column min-vh-100 bg-dark text-white">
-        {/* Navigation Bar */}
-        <Header />
-        
-        {/* Main Content Area */}
-        <main className="flex-grow-1">
-          <Routes>
-            <Route 
-              path="/" 
-              element={
-                <HomePage 
-                  favorites={favorites} 
-                  onToggleFavorite={handleToggleFavorite} 
-                />
-              } 
-            />
-            <Route 
-              path="/wallpaper/:id" 
-              element={
-                <DetailPage 
-                  favorites={favorites} 
-                  onToggleFavorite={handleToggleFavorite} 
-                />
-              } 
-            />
-            <Route 
-              path="/favorites" 
-              element={
-                <FavoritesPage 
-                  favorites={favorites} 
-                  onToggleFavorite={handleToggleFavorite} 
-                />
-              } 
-            />
-            <Route 
-              path="/admin" 
-              element={<AdminPage />} 
-            />
-          </Routes>
-        </main>
-        
-        {/* Footer */}
-        <Footer />
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="d-flex flex-column min-vh-100 bg-dark text-white">
+          {/* Navigation Bar */}
+          <Header />
+          
+          {/* Main Content Area */}
+          <main className="flex-grow-1">
+            <Routes>
+              <Route 
+                path="/" 
+                element={
+                  <HomePage 
+                    favorites={favorites} 
+                    onToggleFavorite={handleToggleFavorite} 
+                  />
+                } 
+              />
+              <Route 
+                path="/wallpaper/:id" 
+                element={
+                  <DetailPage 
+                    favorites={favorites} 
+                    onToggleFavorite={handleToggleFavorite} 
+                  />
+                } 
+              />
+              <Route 
+                path="/favorites" 
+                element={
+                  <FavoritesPage 
+                    favorites={favorites} 
+                    onToggleFavorite={handleToggleFavorite} 
+                  />
+                } 
+              />
+              <Route 
+                path="/login" 
+                element={<LoginPage />} 
+              />
+              
+              {/* Protect Admin route: Only admins allowed */}
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminPage />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </main>
+          
+          {/* Footer */}
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
