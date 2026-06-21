@@ -5,74 +5,45 @@ import Col from 'react-bootstrap/Col';
 import Carousel from 'react-bootstrap/Carousel';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import Pagination from 'react-bootstrap/Pagination';
 import { Search } from 'lucide-react';
 import CategoryFilter from '../components/wallpaper/CategoryFilter';
-import WallpaperCard from '../components/wallpaper/WallpaperCard';
-import Loader from '../components/ui/Loader';
-
-
-const WALLPAPERS_PER_PAGE = 3; // Keep it small so user can easily test pagination!
+import WallpaperGrid from '../components/wallpaper/WallpaperGrid';
 
 function HomePage({ favorites, onToggleFavorite }) {
-  const [wallpapers, setWallpapers] = useState([]);
+  const [featuredWallpapers, setFeaturedWallpapers] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingBanner, setLoadingBanner] = useState(true);
   
   // Filtering states
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    setLoading(true);
-    const fetchWallpapers = fetch('http://localhost:4000/wallpapers').then(res => res.json());
-    const fetchCategories = fetch('http://localhost:4000/categories').then(res => res.json());
+    setLoadingBanner(true);
+    
+    // Fetch categories for filter
+    fetch('http://localhost:4000/categories')
+      .then(res => res.json())
+      .then(data => setCategories(data))
+      .catch(err => console.error("Lỗi khi tải danh mục:", err));
 
-    Promise.all([fetchWallpapers, fetchCategories])
-      .then(([wpData, catData]) => {
-        setWallpapers(wpData);
-        setCategories(catData);
-        setLoading(false);
+    // Fetch wallpapers just to get the featured ones for the banner
+    fetch('http://localhost:4000/wallpapers')
+      .then(res => res.json())
+      .then(data => {
+        setFeaturedWallpapers(data.filter(wp => wp.featured));
+        setLoadingBanner(false);
       })
-      .catch((err) => {
-        console.error("Lỗi khi tải dữ liệu từ API:", err);
-        setLoading(false);
+      .catch(err => {
+        console.error("Lỗi khi tải hình nền nổi bật:", err);
+        setLoadingBanner(false);
       });
   }, []);
-
-  // Filter logic
-  const filteredWallpapers = wallpapers.filter((wp) => {
-    const matchesSearch = 
-      wp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      wp.anime.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = 
-      selectedCategory === null || wp.categoryId === selectedCategory;
-
-    return matchesSearch && matchesCategory;
-  });
-
-  // Featured wallpapers (for carousel banner)
-  const featuredWallpapers = wallpapers.filter(wp => wp.featured);
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredWallpapers.length / WALLPAPERS_PER_PAGE);
-  const indexOfLastWp = currentPage * WALLPAPERS_PER_PAGE;
-  const indexOfFirstWp = indexOfLastWp - WALLPAPERS_PER_PAGE;
-  const currentWallpapers = filteredWallpapers.slice(indexOfFirstWp, indexOfLastWp);
-
-  // Reset page when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
 
   return (
     <div className="bg-dark text-white min-height-100vh">
       {/* 1. Featured Banner Carousel */}
-      {!loading && featuredWallpapers.length > 0 && (
+      {!loadingBanner && featuredWallpapers.length > 0 && (
         <Carousel className="mb-5 border-bottom border-secondary shadow">
           {featuredWallpapers.map((wp) => (
             <Carousel.Item key={wp.id} style={{ height: '400px' }}>
@@ -114,7 +85,7 @@ function HomePage({ favorites, onToggleFavorite }) {
         </Row>
 
         {/* 3. Category Filter */}
-        {!loading && (
+        {categories.length > 0 && (
           <CategoryFilter
             categories={categories}
             activeCategory={selectedCategory}
@@ -122,58 +93,13 @@ function HomePage({ favorites, onToggleFavorite }) {
           />
         )}
 
-        {/* 4. Grid list & Loading States */}
-        {loading ? (
-          <Loader />
-        ) : (
-          <>
-            {filteredWallpapers.length === 0 ? (
-              <div className="text-center py-5 text-muted">
-                <h4>Không tìm thấy hình nền phù hợp.</h4>
-                <p>Hãy thử tìm kiếm với từ khóa khác.</p>
-              </div>
-            ) : (
-              <>
-                <Row className="g-4 mb-5">
-                  {currentWallpapers.map((wp) => (
-                    <Col key={wp.id} xs={12} sm={6} md={4}>
-                      <WallpaperCard
-                        wallpaper={wp}
-                        isFavorite={favorites.includes(wp.id)}
-                        onToggleFavorite={onToggleFavorite}
-                      />
-                    </Col>
-                  ))}
-                </Row>
-
-                {/* 5. Pagination Buttons */}
-                {totalPages > 1 && (
-                  <div className="d-flex justify-content-center mt-4">
-                    <Pagination className="pagination-dark">
-                      <Pagination.Prev
-                        onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                      />
-                      {[...Array(totalPages)].map((_, idx) => (
-                        <Pagination.Item
-                          key={idx + 1}
-                          active={idx + 1 === currentPage}
-                          onClick={() => setCurrentPage(idx + 1)}
-                        >
-                          {idx + 1}
-                        </Pagination.Item>
-                      ))}
-                      <Pagination.Next
-                        onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                      />
-                    </Pagination>
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+        {/* 4. Automated Wallpaper Grid Component */}
+        <WallpaperGrid
+          searchTerm={searchTerm}
+          selectedCategory={selectedCategory}
+          favorites={favorites}
+          onToggleFavorite={onToggleFavorite}
+        />
       </Container>
     </div>
   );

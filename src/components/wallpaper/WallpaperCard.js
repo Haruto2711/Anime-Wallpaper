@@ -30,15 +30,31 @@ function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div className="position-relative" style={{ height: '200px', overflow: 'hidden' }}>
+      <div className="position-relative wallpaper-image-wrapper" style={{ height: '200px', overflow: 'hidden' }}>
         <Card.Img 
           variant="top" 
           src={process.env.PUBLIC_URL + wallpaper.imageUrl} 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
+        
+        {/* Hover Overlay */}
+        <div 
+          className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center wallpaper-hover-overlay"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            opacity: 0,
+            transition: 'opacity 0.2s ease-in-out',
+            zIndex: 1
+          }}
+        >
+          <span className="btn btn-outline-light btn-sm d-flex align-items-center gap-1">
+            <Eye size={16} /> Chi tiết
+          </span>
+        </div>
+
         <span 
           className="position-absolute top-0 start-0 m-2 badge bg-dark text-light border border-secondary"
-          style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+          style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', zIndex: 2 }}
         >
           {wallpaper.resolution}
         </span>
@@ -56,7 +72,8 @@ function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
             height: '32px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            zIndex: 2
           }}
         >
           <Heart 

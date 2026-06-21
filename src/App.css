@@ -4,4 +4,7 @@
   max-width: 1200px;
   margin: 0 auto;
 }
-
+/* Hover overlay for wallpaper cards */
+.wallpaper-image-wrapper:hover .wallpaper-hover-overlay {
+  opacity: 1 !important;
+}
