@@ -1,21 +1,28 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import { Heart, Download, Eye, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../contexts/AuthContext';
 
 function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
   const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
 
   const handleDownload = (e) => {
     e.stopPropagation(); // Avoid triggering card navigation
+    if (!isAuthenticated) {
+      alert("Bạn cần đăng ký hoặc đăng nhập tài khoản để tải ảnh!");
+      navigate('/login');
+      return;
+    }
     // Open image in a new tab to simulate download
     window.open(process.env.PUBLIC_URL + wallpaper.imageUrl, '_blank');
   };
 
   return (
     <Card 
-      className="bg-dark border-secondary h-100 shadow-sm overflow-hidden text-white" 
+      className="glass-panel border-secondary h-100 shadow-sm overflow-hidden text-white" 
       style={{ 
         cursor: 'pointer',
         transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out'
@@ -23,7 +30,7 @@ function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
       onClick={() => navigate(`/wallpaper/${wallpaper.id}`)}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-5px)';
-        e.currentTarget.style.boxShadow = '0 10px 20px rgba(139, 92, 246, 0.2)';
+        e.currentTarget.style.boxShadow = '0 10px 20px rgba(255, 133, 162, 0.3)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
@@ -34,14 +41,19 @@ function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
         <Card.Img 
           variant="top" 
           src={process.env.PUBLIC_URL + wallpaper.imageUrl} 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover', 
+            objectPosition: (wallpaper.imageUrl.includes('Chronicles') || wallpaper.imageUrl.includes('474848354470621904')) ? 'center' : 'center top' 
+          }}
         />
         
         {/* Hover Overlay */}
         <div 
           className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center wallpaper-hover-overlay"
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backgroundColor: 'rgba(255, 133, 162, 0.2)',
             opacity: 0,
             transition: 'opacity 0.2s ease-in-out',
             zIndex: 1

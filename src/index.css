@@ -1,13 +1,61 @@
+:root {
+  --sakura-primary: #ff85a2;
+  --sakura-primary-hover: #ffb3c6;
+  --sakura-bg-dark: #160a12; /* Dark warm pinkish background */
+  --sakura-glass: rgba(255, 183, 197, 0.05);
+  --sakura-glass-border: rgba(255, 183, 197, 0.2);
+}
+
 body {
   margin: 0;
   font-family: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0d0e12;
+  background-color: var(--sakura-bg-dark) !important;
   color: #f8fafc;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Override bootstrap bg-dark */
+.bg-dark {
+  background-color: var(--sakura-bg-dark) !important;
+}
+
+/* Global Glassmorphism update */
+.glass-panel {
+  background: var(--sakura-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--sakura-glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Change primary text color globally */
+.text-primary {
+  color: var(--sakura-primary) !important;
+}
+
+.btn-primary {
+  background-color: var(--sakura-primary) !important;
+  border-color: var(--sakura-primary) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--sakura-primary-hover) !important;
+  border-color: var(--sakura-primary-hover) !important;
+}
+
+.btn-outline-primary {
+  color: var(--sakura-primary) !important;
+  border-color: var(--sakura-primary) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--sakura-primary) !important;
+  color: #fff !important;
 }
 
