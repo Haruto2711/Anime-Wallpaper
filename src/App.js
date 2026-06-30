@@ -7,8 +7,10 @@ import DetailPage from './pages/DetailPage';
 import FavoritesPage from './pages/FavoritesPage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import SakuraBackground from './components/ui/SakuraBackground';
 
 function App() {
   // Global favorites state initialized from localStorage
@@ -31,6 +33,29 @@ function App() {
     }
   }, [favorites]);
 
+  // Global image protection: Disable right-click & drag on all images
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+      }
+    };
+
+    const handleDragStart = (e) => {
+      if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('dragstart', handleDragStart);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('dragstart', handleDragStart);
+    };
+  }, []);
+
   // Handler to add/remove a wallpaper from favorites
   const handleToggleFavorite = (id) => {
     setFavorites((prev) => {
@@ -46,6 +71,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="d-flex flex-column min-vh-100 bg-dark text-white">
+          <SakuraBackground />
           {/* Navigation Bar */}
           <Header />
           
@@ -82,6 +108,10 @@ function App() {
               <Route 
                 path="/login" 
                 element={<LoginPage />} 
+              />
+              <Route 
+                path="/register" 
+                element={<RegisterPage />} 
               />
               
               {/* Protect Admin route: Only admins allowed */}

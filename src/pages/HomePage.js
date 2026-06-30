@@ -21,21 +21,19 @@ function HomePage({ favorites, onToggleFavorite }) {
   useEffect(() => {
     setLoadingBanner(true);
     
-    // Fetch categories for filter
-    fetch('http://localhost:4000/categories')
-      .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error("Lỗi khi tải danh mục:", err));
+    const fetchCats = fetch('http://localhost:4000/categories').then(res => res.json());
+    const fetchWps = fetch('http://localhost:4000/wallpapers').then(res => res.json());
 
-    // Fetch wallpapers just to get the featured ones for the banner
-    fetch('http://localhost:4000/wallpapers')
-      .then(res => res.json())
-      .then(data => {
-        setFeaturedWallpapers(data.filter(wp => wp.featured));
+    Promise.all([fetchCats, fetchWps])
+      .then(([catsData, wpsData]) => {
+        // Filter categories that have at least one wallpaper
+        const activeCats = catsData.filter(cat => wpsData.some(wp => wp.categoryId === cat.id));
+        setCategories(activeCats);
+        setFeaturedWallpapers(wpsData.filter(wp => wp.featured));
         setLoadingBanner(false);
       })
       .catch(err => {
-        console.error("Lỗi khi tải hình nền nổi bật:", err);
+        console.error("Lỗi khi tải dữ liệu trang chủ:", err);
         setLoadingBanner(false);
       });
   }, []);
@@ -51,15 +49,16 @@ function HomePage({ favorites, onToggleFavorite }) {
                 className="d-block w-100 h-100"
                 src={process.env.PUBLIC_URL + wp.imageUrl}
                 alt={wp.title}
-                style={{ objectFit: 'cover', filter: 'brightness(0.6)' }}
+                style={{ 
+                  objectFit: 'cover', 
+                  objectPosition: (wp.imageUrl.includes('Chronicles') || wp.imageUrl.includes('474848354470621904')) ? 'center' : 'center top', 
+                  filter: 'brightness(0.6)' 
+                }}
               />
-              <Carousel.Caption className="text-start pb-5 px-4 rounded" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', maxWidth: '500px', left: '10%' }}>
+              <Carousel.Caption className="text-start pb-4 px-4 rounded glass-panel" style={{ maxWidth: '400px', left: '10%' }}>
                 <span className="badge bg-primary mb-2">Featured Wallpaper</span>
-                <h3>{wp.title}</h3>
-                <p className="text-info">{wp.anime}</p>
-                <p className="d-none d-md-block text-white-50" style={{ fontSize: '0.9rem' }}>
-                  {wp.description}
-                </p>
+                <h3 className="mb-1">{wp.title}</h3>
+                <p className="text-info mb-0" style={{ fontSize: '0.9rem' }}>{wp.anime}</p>
               </Carousel.Caption>
             </Carousel.Item>
           ))}

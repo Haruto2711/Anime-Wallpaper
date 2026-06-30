@@ -48,6 +48,42 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Register function
+  const register = async (username, email, password) => {
+    try {
+      // 1. Check if username already exists
+      const checkRes = await fetch(`http://localhost:4000/users?username=${username}`);
+      if (!checkRes.ok) throw new Error("Lỗi mạng, không thể kiểm tra tài khoản.");
+      
+      const existingUsers = await checkRes.json();
+      if (existingUsers.length > 0) {
+        return { success: false, message: 'Tên đăng nhập đã tồn tại.' };
+      }
+
+      // 2. Create new user
+      const newUser = {
+        id: `user-${Date.now()}`,
+        username,
+        email,
+        password,
+        role: 'user' // default role
+      };
+
+      const saveRes = await fetch('http://localhost:4000/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+
+      if (!saveRes.ok) throw new Error("Lỗi mạng, không thể đăng ký tài khoản.");
+      
+      return { success: true };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: err.message || 'Không thể kết nối đến máy chủ.' };
+    }
+  };
+
   // Logout function
   const logout = () => {
     setUser(null);
@@ -59,7 +95,8 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     loading,
     login,
-    logout
+    logout,
+    register
   };
 
   return (

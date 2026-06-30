@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -9,10 +9,12 @@ import { ArrowLeft, Heart, Download, Star, Monitor, Calendar } from 'lucide-reac
 import CommentSection from '../components/comments/CommentSection';
 import Loader from '../components/ui/Loader';
 import WallpaperCard from '../components/wallpaper/WallpaperCard';
+import { AuthContext } from '../contexts/AuthContext';
 
 function DetailPage({ favorites, onToggleFavorite }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useContext(AuthContext);
   
   const [wallpaper, setWallpaper] = useState(null);
   const [comments, setComments] = useState([]);
@@ -46,6 +48,12 @@ function DetailPage({ favorites, onToggleFavorite }) {
   };
 
   const handleDownload = () => {
+    if (!isAuthenticated) {
+      alert("Bạn cần đăng ký hoặc đăng nhập tài khoản để tải ảnh!");
+      navigate('/login');
+      return;
+    }
+
     const updatedDownloads = (wallpaper?.downloads || 0) + 1;
     
     // Update local state immediately

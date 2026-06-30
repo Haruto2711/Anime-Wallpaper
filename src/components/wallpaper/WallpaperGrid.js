@@ -5,7 +5,7 @@ import Pagination from 'react-bootstrap/Pagination';
 import WallpaperCard from './WallpaperCard';
 import Loader from '../ui/Loader';
 
-const WALLPAPERS_PER_PAGE = 3; // Number of items per page
+const WALLPAPERS_PER_PAGE = 48; // Number of items per page
 
 function WallpaperGrid({ searchTerm = '', selectedCategory = null, favorites = [], onToggleFavorite }) {
   const [wallpapers, setWallpapers] = useState([]);
