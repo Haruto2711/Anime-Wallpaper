@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Pagination from 'react-bootstrap/Pagination';
+import Button from 'react-bootstrap/Button';
 import WallpaperCard from './WallpaperCard';
 import Loader from '../ui/Loader';
 
-const WALLPAPERS_PER_PAGE = 48; // Number of items per page
+const WALLPAPERS_PER_PAGE = 10; // Number of items per page
 
 function WallpaperGrid({ searchTerm = '', selectedCategory = null, favorites = [], onToggleFavorite }) {
   const [wallpapers, setWallpapers] = useState([]);
@@ -83,26 +83,34 @@ function WallpaperGrid({ searchTerm = '', selectedCategory = null, favorites = [
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="d-flex justify-content-center my-4">
-          <Pagination className="pagination-dark">
-            <Pagination.Prev
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-            />
-            {[...Array(totalPages)].map((_, idx) => (
-              <Pagination.Item
-                key={idx + 1}
-                active={idx + 1 === currentPage}
-                onClick={() => setCurrentPage(idx + 1)}
-              >
-                {idx + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            />
-          </Pagination>
+        <div className="d-flex justify-content-center align-items-center gap-3 my-4">
+          <Button 
+            variant="outline-primary"
+            disabled={currentPage === 1}
+            onClick={() => {
+              setCurrentPage((p) => Math.max(p - 1, 1));
+              window.scrollTo({ top: 350, behavior: 'smooth' });
+            }}
+            className="d-flex align-items-center gap-1 px-3"
+          >
+            &larr; Trang trước
+          </Button>
+          
+          <span className="text-white-50" style={{ fontSize: '0.9rem' }}>
+            Trang <strong>{currentPage}</strong> / {totalPages}
+          </span>
+
+          <Button 
+            variant="outline-primary"
+            disabled={currentPage === totalPages}
+            onClick={() => {
+              setCurrentPage((p) => Math.min(p + 1, totalPages));
+              window.scrollTo({ top: 350, behavior: 'smooth' });
+            }}
+            className="d-flex align-items-center gap-1 px-3"
+          >
+            Trang sau &rarr;
+          </Button>
         </div>
       )}
     </>
