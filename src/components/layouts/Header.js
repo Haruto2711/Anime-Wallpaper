@@ -7,14 +7,17 @@ import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
-import { LogOut, LogIn, User, Plus, Bell, X, Pin, Grid, Scissors, CheckCircle } from 'lucide-react';
+import { SettingsContext } from '../../contexts/SettingsContext';
+import { LogOut, LogIn, User, Plus, Bell, X, Pin, Grid, Scissors, CheckCircle, Settings } from 'lucide-react';
 
 function Header() {
   const { user, isAuthenticated, logout } = useContext(AuthContext);
+  const { sakuraEnabled, setSakuraEnabled, accentColor, setAccentColor, sharpenEnabled, setSharpenEnabled } = useContext(SettingsContext);
   
   // Custom menus states
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showBoardModal, setShowBoardModal] = useState(false);
   const [showCollageModal, setShowCollageModal] = useState(false);
@@ -263,6 +266,21 @@ function Header() {
                       </div>
                     )}
                   </div>
+
+                  {/* Settings Button */}
+                  <div className="position-relative">
+                    <span 
+                      className="nav-link text-light-50 hover-text-white d-flex align-items-center ms-2"
+                      onClick={() => {
+                        setShowSettingsModal(true);
+                        setShowCreateMenu(false);
+                        setShowNotifMenu(false);
+                      }}
+                      style={{ cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      <Settings size={20} />
+                    </span>
+                  </div>
                 </>
               )}
               
@@ -464,6 +482,89 @@ function Header() {
         </Modal.Body>
         <Modal.Footer className="border-secondary">
           <Button variant="primary" onClick={() => setShowCollageModal(false)}>Đồng ý</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Settings Modal */}
+      <Modal show={showSettingsModal} onHide={() => setShowSettingsModal(false)} centered contentClassName="glass-panel border-secondary text-white shadow-lg">
+        <Modal.Header closeButton closeVariant="white" className="border-secondary">
+          <Modal.Title className="d-flex align-items-center gap-2">
+            <Settings size={22} className="text-primary" /> Cài đặt giao diện
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex flex-column gap-4 py-4">
+          {/* 1. Falling Sakura Petals Toggle */}
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 className="mb-0 text-white">Hiệu ứng Hoa anh đào rơi</h6>
+              <small className="text-white-50">Bật/Tắt hiệu ứng cánh hoa rơi trên nền trang web</small>
+            </div>
+            <Form.Check 
+              type="switch"
+              id="sakura-switch"
+              checked={sakuraEnabled}
+              onChange={(e) => setSakuraEnabled(e.target.checked)}
+              className="fs-5"
+            />
+          </div>
+
+          {/* 2. Sharpen Filters Toggle */}
+          <div className="d-flex justify-content-between align-items-center border-top border-secondary pt-3">
+            <div>
+              <h6 className="mb-0 text-white">Tự động làm nét ảnh cực đại</h6>
+              <small className="text-white-50">Bật/Tắt bộ lọc làm nét cho toàn bộ hình nền</small>
+            </div>
+            <Form.Check 
+              type="switch"
+              id="sharpen-switch"
+              checked={sharpenEnabled}
+              onChange={(e) => setSharpenEnabled(e.target.checked)}
+              className="fs-5"
+            />
+          </div>
+
+          {/* 3. Theme Color Selection */}
+          <div className="border-top border-secondary pt-3">
+            <h6 className="mb-2 text-white">Tông màu giao diện chủ đạo</h6>
+            <small className="text-white-50 d-block mb-3">Chọn màu sắc điểm nhấn và hiệu ứng màu hoa rơi tương ứng</small>
+            <div className="d-flex gap-3 justify-content-center">
+              {/* Pink Sakura button */}
+              <Button 
+                variant={accentColor === 'pink' ? 'primary' : 'outline-primary'}
+                className="px-3 py-2 d-flex align-items-center gap-2"
+                onClick={() => setAccentColor('pink')}
+                style={{ fontSize: '0.85rem' }}
+              >
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff85a2' }} />
+                Hồng Sakura
+              </Button>
+
+              {/* Purple Wisteria button */}
+              <Button 
+                variant={accentColor === 'purple' ? 'primary' : 'outline-primary'}
+                className="px-3 py-2 d-flex align-items-center gap-2"
+                onClick={() => setAccentColor('purple')}
+                style={{ fontSize: '0.85rem' }}
+              >
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#b5179e' }} />
+                Tím Thạch Lan
+              </Button>
+
+              {/* Blue Cyber button */}
+              <Button 
+                variant={accentColor === 'blue' ? 'primary' : 'outline-primary'}
+                className="px-3 py-2 d-flex align-items-center gap-2"
+                onClick={() => setAccentColor('blue')}
+                style={{ fontSize: '0.85rem' }}
+              >
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#00b4d8' }} />
+                Xanh Cyber
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="border-secondary">
+          <Button variant="primary" onClick={() => setShowSettingsModal(false)}>Đóng cài đặt</Button>
         </Modal.Footer>
       </Modal>
     </>

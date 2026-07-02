@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
+import { SettingsContext } from '../../contexts/SettingsContext';
 import './SakuraBackground.css';
 
 const SakuraBackground = () => {
+  const { sakuraEnabled } = useContext(SettingsContext);
+
   // Generate random petals
   const petals = useMemo(() => {
     return Array.from({ length: 40 }).map((_, i) => {
@@ -19,6 +22,8 @@ const SakuraBackground = () => {
       };
     });
   }, []);
+
+  if (!sakuraEnabled) return null;
 
   return (
     <div className="sakura-container">

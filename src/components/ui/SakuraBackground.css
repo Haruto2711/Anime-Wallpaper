@@ -12,10 +12,10 @@
 .petal {
   position: absolute;
   top: -10%;
-  background-color: #ffb7c5;
+  background-color: var(--petal-color, #ffb7c5);
   border-radius: 15px 0 15px 0;
   opacity: 0.6;
-  box-shadow: 0 0 10px rgba(255, 183, 197, 0.5);
+  box-shadow: 0 0 10px var(--petal-glow, rgba(255, 183, 197, 0.5));
   animation: fall linear infinite, sway ease-in-out infinite alternate;
 }
 

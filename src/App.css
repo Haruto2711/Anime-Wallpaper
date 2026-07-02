@@ -2,12 +2,12 @@
 img, .card-img-top, .d-block {
   image-rendering: -webkit-optimize-contrast !important;
   image-rendering: crisp-edges !important;
-  filter: url(#sharpen-filter) contrast(1.02) saturate(1.04) brightness(1.01);
+  filter: var(--sharpen-filter, url(#sharpen-filter)) contrast(1.02) saturate(1.04) brightness(1.01);
   transition: filter 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 img:hover {
-  filter: url(#sharpen-filter-heavy) contrast(1.05) saturate(1.06) brightness(1.02);
+  filter: var(--sharpen-filter-heavy, url(#sharpen-filter-heavy)) contrast(1.05) saturate(1.06) brightness(1.02);
 }
 
 /* Viết CSS của bạn tại đây */
