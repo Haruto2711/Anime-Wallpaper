@@ -5,7 +5,8 @@ import Col from 'react-bootstrap/Col';
 import Carousel from 'react-bootstrap/Carousel';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import { Search } from 'lucide-react';
+import Button from 'react-bootstrap/Button';
+import { Search, Mic, MicOff } from 'lucide-react';
 import CategoryFilter from '../components/wallpaper/CategoryFilter';
 import WallpaperGrid from '../components/wallpaper/WallpaperGrid';
 
@@ -17,6 +18,55 @@ function HomePage({ favorites, onToggleFavorite }) {
   // Filtering states
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // Voice recognition states
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+
+  useEffect(() => {
+    // Check browser support for SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = 'vi-VN'; // Works for Vietnamese & common Anime names
+      
+      rec.onstart = () => {
+        setIsListening(true);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const cleanText = transcript.replace(/\.$/g, '');
+        setSearchTerm(cleanText);
+      };
+
+      rec.onerror = (e) => {
+        console.error("Speech recognition error", e);
+        setIsListening(false);
+      };
+
+      setRecognition(rec);
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognition) {
+      alert("Trình duyệt của bạn không hỗ trợ Tìm kiếm bằng Giọng nói. Hãy thử Chrome hoặc Edge!");
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+  };
 
   useEffect(() => {
     setLoadingBanner(true);
@@ -79,6 +129,15 @@ function HomePage({ favorites, onToggleFavorite }) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-dark text-white border-secondary"
               />
+              <Button 
+                variant="outline-secondary" 
+                className={`border-secondary d-flex align-items-center justify-content-center ${isListening ? 'pulse-animation' : 'bg-dark text-white-50'}`}
+                onClick={toggleListening}
+                title="Tìm kiếm bằng giọng nói"
+                style={{ zIndex: 10 }}
+              >
+                {isListening ? <MicOff size={18} className="text-white" /> : <Mic size={18} />}
+              </Button>
             </InputGroup>
           </Col>
         </Row>
