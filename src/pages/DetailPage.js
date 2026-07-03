@@ -221,17 +221,18 @@ function DetailPage({ favorites, onToggleFavorite }) {
       {relatedWallpapers.length > 0 && (
         <div className="mt-5 pt-4">
           <h3 className="mb-4 border-bottom border-secondary pb-2">Hình nền liên quan</h3>
-          <Row className="g-4">
+          {/* Pinterest Masonry Grid */}
+          <div className="masonry-grid mb-4">
             {relatedWallpapers.map(wp => (
-              <Col key={wp.id} xs={12} sm={6} md={4}>
+              <div key={wp.id} className="masonry-item">
                 <WallpaperCard 
                   wallpaper={wp}
                   isFavorite={favorites.includes(wp.id)}
                   onToggleFavorite={onToggleFavorite}
                 />
-              </Col>
+              </div>
             ))}
-          </Row>
+          </div>
         </div>
       )}
 

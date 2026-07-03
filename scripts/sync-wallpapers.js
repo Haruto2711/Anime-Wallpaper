@@ -66,6 +66,15 @@ function cleanTitle(filename) {
   title = title.replace(/\[.*?\]/g, '');
   title = title.replace(/\(.*?\)/g, '');
   
+  // Specific clean mappings for premium titles
+  if (title === 'Asuna und Kirito') return 'Asuna & Kirito - Eternal Bond';
+  if (title === 'The Chronicles') return 'The Chronicles of Branded';
+  if (title === 'Yukino') return 'Yukino Yukinoshita - Silent Snow';
+  if (title === 'Light of the Branded') return 'Light of the Branded';
+  if (title === 'Albaz the Ashen') return 'Albaz the Ashen';
+  if (title === 'Dogmatika Ecclesia, the Virtuous') return 'Dogmatika Ecclesia, the Virtuous';
+  if (title === 'Incredible Ecclesia, the Virtuous') return 'Incredible Ecclesia, the Virtuous';
+  
   // Clean special characters
   title = title.replace(/[_-]/g, ' ');
   title = title.replace(/[?]/g, '');
@@ -135,9 +144,10 @@ function run() {
 
     const title = cleanTitle(filename) || `Wallpaper ${idCounter}`;
     
-    // Set 3 featured wallpapers (select some high quality names)
-    // Let's feature one SAO love, one Yugioh, one Oregairu
-    const featured = idCounter === 1 || idCounter === 25 || idCounter === 45;
+    // Select beautiful wide landscape wallpapers for the carousel banner
+    const featured = relativePath.endsWith('/Yugioh/Branded/The Chronicles.jpg') ||
+                     relativePath.endsWith('/Love/Couple/Kirito x Asuna/Asuna und Kirito.jpg') ||
+                     relativePath.endsWith('/Oregairu/Yukino/Yukino.jpg');
 
     wallpapers.push({
       id: `wp-${String(idCounter).padStart(3, '0')}`,

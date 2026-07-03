@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import SakuraBackground from './components/ui/SakuraBackground';
+import './App.css';
 
 function App() {
   // Global favorites state initialized from localStorage
