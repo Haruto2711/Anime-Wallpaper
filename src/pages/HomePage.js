@@ -88,6 +88,14 @@ function HomePage({ favorites, onToggleFavorite }) {
       });
   }, []);
 
+  const getBannerPosition = (imageUrl) => {
+    const path = imageUrl.toLowerCase();
+    if (path.includes('yukino')) return 'center 75%'; // Focus lower to show her face rather than the top colorful wall
+    if (path.includes('asuna') || path.includes('kirito')) return 'center 35%'; // Focus slightly higher to avoid cutting heads
+    if (path.includes('chronicles') || path.includes('branded')) return 'center';
+    return 'center';
+  };
+
   return (
     <div className="bg-dark text-white min-height-100vh">
       {/* 1. Featured Banner Carousel */}
@@ -101,7 +109,7 @@ function HomePage({ favorites, onToggleFavorite }) {
                 alt={wp.title}
                 style={{ 
                   objectFit: 'cover', 
-                  objectPosition: (wp.imageUrl.includes('Chronicles') || wp.imageUrl.includes('474848354470621904')) ? 'center' : 'center top', 
+                  objectPosition: getBannerPosition(wp.imageUrl), 
                   filter: 'brightness(0.6)' 
                 }}
               />
