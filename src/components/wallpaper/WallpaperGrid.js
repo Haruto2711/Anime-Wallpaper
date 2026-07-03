@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import WallpaperCard from './WallpaperCard';
 import Loader from '../ui/Loader';
@@ -68,18 +66,18 @@ function WallpaperGrid({ searchTerm = '', selectedCategory = null, favorites = [
 
   return (
     <>
-      {/* Wallpapers Cards Grid */}
-      <Row className="g-4 mb-4">
+      {/* Pinterest Masonry Grid */}
+      <div className="masonry-grid mb-4">
         {currentWallpapers.map((wp) => (
-          <Col key={wp.id} xs={12} sm={6} md={4}>
+          <div key={wp.id} className="masonry-item">
             <WallpaperCard
               wallpaper={wp}
               isFavorite={favorites.includes(wp.id)}
               onToggleFavorite={onToggleFavorite}
             />
-          </Col>
+          </div>
         ))}
-      </Row>
+      </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (

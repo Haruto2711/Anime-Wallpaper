@@ -37,15 +37,14 @@ function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div className="position-relative wallpaper-image-wrapper" style={{ height: '200px', overflow: 'hidden' }}>
+      <div className="position-relative wallpaper-image-wrapper" style={{ overflow: 'hidden' }}>
         <Card.Img 
           variant="top" 
           src={process.env.PUBLIC_URL + wallpaper.imageUrl} 
           style={{ 
             width: '100%', 
-            height: '100%', 
-            objectFit: 'cover', 
-            objectPosition: (wallpaper.imageUrl.includes('Chronicles') || wallpaper.imageUrl.includes('474848354470621904')) ? 'center' : 'center top' 
+            height: 'auto',
+            display: 'block'
           }}
         />
         

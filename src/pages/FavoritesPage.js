@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import { Heart, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -51,17 +49,18 @@ function FavoritesPage({ favorites, onToggleFavorite }) {
               </Button>
             </div>
           ) : (
-            <Row className="g-4">
+            <div className="masonry-grid mb-4">
+              {/* Pinterest Masonry Grid */}
               {favoriteWallpapers.map((wp) => (
-                <Col key={wp.id} xs={12} sm={6} md={4}>
+                <div key={wp.id} className="masonry-item">
                   <WallpaperCard
                     wallpaper={wp}
                     isFavorite={true}
                     onToggleFavorite={onToggleFavorite}
                   />
-                </Col>
+                </div>
               ))}
-            </Row>
+            </div>
           )}
         </>
       )}
