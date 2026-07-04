@@ -26,8 +26,47 @@ function AppContent({ favorites, handleToggleFavorite }) {
     fetch('http://localhost:4000/wallpapers')
       .then(res => res.json())
       .then(data => {
-        const ids = new Set(data.map(wp => wp.id));
-        knownWpIdsRef.current = ids;
+        const currentIds = data.map(wp => wp.id);
+        const savedIdsJson = localStorage.getItem('known_wallpaper_ids');
+        
+        if (savedIdsJson) {
+          // User has visited before. Check for new wallpapers added since their last session!
+          const savedIdsArray = JSON.parse(savedIdsJson);
+          const savedIdsSet = new Set(savedIdsArray);
+          
+          const newItems = data.filter(wp => !savedIdsSet.has(wp.id));
+          
+          if (newItems.length > 0) {
+            // Trigger toasts and dispatch events for new offline-added wallpapers
+            newItems.forEach(newWp => {
+              // Dispatch custom event for Header notification badge
+              window.dispatchEvent(new CustomEvent('new-wallpaper-uploaded', { detail: newWp }));
+
+              setToasts(prev => [
+                ...prev,
+                {
+                  id: newWp.id,
+                  title: newWp.title,
+                  anime: newWp.anime,
+                  author: newWp.author || 'Minh Thanh',
+                  imageUrl: newWp.imageUrl,
+                  timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                }
+              ]);
+            });
+            
+            // Add new items to saved set
+            newItems.forEach(wp => savedIdsSet.add(wp.id));
+          }
+          
+          knownWpIdsRef.current = savedIdsSet;
+          localStorage.setItem('known_wallpaper_ids', JSON.stringify(Array.from(savedIdsSet)));
+        } else {
+          // First time visit: just save all current wallpapers as known to prevent spamming
+          const idsSet = new Set(currentIds);
+          knownWpIdsRef.current = idsSet;
+          localStorage.setItem('known_wallpaper_ids', JSON.stringify(currentIds));
+        }
       })
       .catch(err => console.error("Error setting initial wallpapers for notifications", err));
   }, []);
@@ -45,7 +84,12 @@ function AppContent({ favorites, handleToggleFavorite }) {
           
           if (newItems.length > 0) {
             // Update ref immediately to prevent showing duplicate toasts
-            newItems.forEach(wp => knownWpIdsRef.current.add(wp.id));
+            newItems.forEach(wp => {
+              knownWpIdsRef.current.add(wp.id);
+            });
+            
+            // Sync to localStorage
+            localStorage.setItem('known_wallpaper_ids', JSON.stringify(Array.from(knownWpIdsRef.current)));
 
             newItems.forEach(newWp => {
               // Dispatch custom event for Header notification badge
