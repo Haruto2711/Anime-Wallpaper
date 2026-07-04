@@ -1,11 +1,11 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SettingsContext } from '../../contexts/SettingsContext';
 import { LogOut, LogIn, User, Plus, Bell, X, Pin, Grid, Scissors, CheckCircle, Settings } from 'lucide-react';
@@ -13,6 +13,7 @@ import { LogOut, LogIn, User, Plus, Bell, X, Pin, Grid, Scissors, CheckCircle, S
 function Header() {
   const { user, isAuthenticated, logout } = useContext(AuthContext);
   const { sakuraEnabled, setSakuraEnabled, accentColor, setAccentColor, sharpenEnabled, setSharpenEnabled } = useContext(SettingsContext);
+  const navigate = useNavigate();
   
   // Custom menus states
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -21,6 +22,71 @@ function Header() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showBoardModal, setShowBoardModal] = useState(false);
   const [showCollageModal, setShowCollageModal] = useState(false);
+
+  // Dynamic notifications list
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('user_notifications');
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        id: 'notif-1',
+        title: 'Cập nhật kho ảnh SAO',
+        message: 'Admin đã thêm 29 hình nền Sword Art Online mới vào danh mục!',
+        read: false,
+        time: '10:00'
+      },
+      {
+        id: 'notif-2',
+        title: 'Tính năng bảo mật mới',
+        message: 'Đã kích hoạt tính năng bảo vệ bản quyền ảnh chống tải chuột phải và kéo thả.',
+        read: false,
+        time: '09:00'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    const handleNewWp = (e) => {
+      const newWp = e.detail;
+      setNotifications(prev => {
+        // Check for duplicate notifications just in case
+        if (prev.some(n => n.wpId === newWp.id)) return prev;
+
+        const updated = [
+          {
+            id: 'notif-' + newWp.id,
+            title: 'Ảnh mới tải lên!',
+            message: `Hình nền "${newWp.title}" vừa được thêm bởi ${newWp.author || 'Minh Thanh'}.`,
+            read: false,
+            time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            wpId: newWp.id
+          },
+          ...prev
+        ];
+        localStorage.setItem('user_notifications', JSON.stringify(updated));
+        return updated;
+      });
+    };
+
+    window.addEventListener('new-wallpaper-uploaded', handleNewWp);
+    return () => window.removeEventListener('new-wallpaper-uploaded', handleNewWp);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleOpenNotifMenu = () => {
+    setShowNotifMenu(!showNotifMenu);
+    setShowCreateMenu(false);
+    
+    // Mark all as read when menu is toggled open
+    if (!showNotifMenu) {
+      setNotifications(prev => {
+        const updated = prev.map(n => ({ ...n, read: true }));
+        localStorage.setItem('user_notifications', JSON.stringify(updated));
+        return updated;
+      });
+    }
+  };
 
   // Form states for Upload
   const [newTitle, setNewTitle] = useState('');
@@ -230,22 +296,21 @@ function Header() {
                   <div className="position-relative">
                     <span 
                       className="nav-link text-light-50 hover-text-white d-flex align-items-center"
-                      onClick={() => {
-                        setShowNotifMenu(!showNotifMenu);
-                        setShowCreateMenu(false);
-                      }}
+                      onClick={handleOpenNotifMenu}
                       style={{ cursor: 'pointer', userSelect: 'none' }}
                     >
                       <Bell size={20} />
-                      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.55rem', padding: '0.15rem 0.3rem', transform: 'translate(20%, -30%)' }}>
-                        2
-                      </span>
+                      {unreadCount > 0 && (
+                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.55rem', padding: '0.15rem 0.3rem', transform: 'translate(20%, -30%)' }}>
+                          {unreadCount}
+                        </span>
+                      )}
                     </span>
 
                     {showNotifMenu && (
                       <div 
                         className="position-absolute bg-dark border border-secondary rounded p-3 shadow-lg"
-                        style={{ top: '100%', right: '0', zIndex: 1050, width: '300px', marginTop: '10px' }}
+                        style={{ top: '100%', right: '0', zIndex: 1050, width: '320px', marginTop: '10px' }}
                       >
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <span className="fw-bold text-white fs-6">Thông báo</span>
@@ -254,14 +319,36 @@ function Header() {
                           </button>
                         </div>
                         <div className="d-flex flex-column gap-2" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                          <div className="p-2 border-bottom border-secondary" style={{ fontSize: '0.8rem' }}>
-                            <div className="text-white fw-semibold">Cập nhật kho ảnh SAO</div>
-                            <div className="text-white-50" style={{ fontSize: '0.75rem' }}>Admin đã thêm 29 hình nền Sword Art Online mới vào danh mục!</div>
-                          </div>
-                          <div className="p-2" style={{ fontSize: '0.8rem' }}>
-                            <div className="text-white fw-semibold">Tính năng bảo mật mới</div>
-                            <div className="text-white-50" style={{ fontSize: '0.75rem' }}>Đã kích hoạt tính năng bảo vệ bản quyền ảnh chống tải chuột phải và kéo thả.</div>
-                          </div>
+                          {notifications.length === 0 ? (
+                            <div className="text-center text-muted py-3" style={{ fontSize: '0.8rem' }}>
+                              Không có thông báo nào.
+                            </div>
+                          ) : (
+                            notifications.map((notif) => (
+                              <div 
+                                key={notif.id} 
+                                className="p-2 border-bottom border-secondary position-relative hover-highlight" 
+                                style={{ 
+                                  fontSize: '0.8rem', 
+                                  cursor: notif.wpId ? 'pointer' : 'default',
+                                  backgroundColor: notif.read ? 'transparent' : 'rgba(255, 255, 255, 0.05)',
+                                  transition: 'background-color 0.2s ease-in-out'
+                                }}
+                                onClick={() => {
+                                  if (notif.wpId) {
+                                    navigate(`/wallpaper/${notif.wpId}`);
+                                    setShowNotifMenu(false);
+                                  }
+                                }}
+                              >
+                                <div className="d-flex justify-content-between">
+                                  <span className="text-white fw-semibold">{notif.title}</span>
+                                  <span className="text-muted" style={{ fontSize: '0.7rem' }}>{notif.time}</span>
+                                </div>
+                                <div className="text-white-50 mt-1" style={{ fontSize: '0.75rem' }}>{notif.message}</div>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     )}

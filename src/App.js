@@ -48,6 +48,9 @@ function AppContent({ favorites, handleToggleFavorite }) {
             newItems.forEach(wp => knownWpIdsRef.current.add(wp.id));
 
             newItems.forEach(newWp => {
+              // Dispatch custom event for Header notification badge
+              window.dispatchEvent(new CustomEvent('new-wallpaper-uploaded', { detail: newWp }));
+
               setToasts(prev => [
                 ...prev,
                 {
