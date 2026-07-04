@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
@@ -19,7 +19,7 @@ import './App.css';
 function AppContent({ favorites, handleToggleFavorite }) {
   const navigate = useNavigate();
   const [toasts, setToasts] = useState([]);
-  const [knownWpIds, setKnownWpIds] = useState(new Set());
+  const knownWpIdsRef = useRef(new Set());
 
   // Initial fetch to establish known wallpapers
   useEffect(() => {
@@ -27,27 +27,25 @@ function AppContent({ favorites, handleToggleFavorite }) {
       .then(res => res.json())
       .then(data => {
         const ids = new Set(data.map(wp => wp.id));
-        setKnownWpIds(ids);
+        knownWpIdsRef.current = ids;
       })
       .catch(err => console.error("Error setting initial wallpapers for notifications", err));
   }, []);
 
   // Poll for new wallpapers
   useEffect(() => {
-    if (knownWpIds.size === 0) return;
-
     const interval = setInterval(() => {
+      // Wait until initial set of wallpapers has loaded
+      if (knownWpIdsRef.current.size === 0) return;
+
       fetch('http://localhost:4000/wallpapers')
         .then(res => res.json())
         .then(data => {
-          const newItems = data.filter(wp => !knownWpIds.has(wp.id));
+          const newItems = data.filter(wp => !knownWpIdsRef.current.has(wp.id));
           
           if (newItems.length > 0) {
-            setKnownWpIds(prev => {
-              const updated = new Set(prev);
-              newItems.forEach(wp => updated.add(wp.id));
-              return updated;
-            });
+            // Update ref immediately to prevent showing duplicate toasts
+            newItems.forEach(wp => knownWpIdsRef.current.add(wp.id));
 
             newItems.forEach(newWp => {
               setToasts(prev => [
@@ -68,7 +66,7 @@ function AppContent({ favorites, handleToggleFavorite }) {
     }, 8000); // Check every 8 seconds
 
     return () => clearInterval(interval);
-  }, [knownWpIds]);
+  }, []);
 
   const removeToast = (id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
