@@ -23,20 +23,26 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
     featured: false
   });
 
+  const [categoryName, setCategoryName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         ...initialData,
-        // Make sure fields are not undefined
         downloads: initialData.downloads ?? 0,
         likes: initialData.likes ?? 0,
         rating: initialData.rating ?? 5.0,
         featured: initialData.featured ?? false
       });
+      // Find matching category name from initial categoryId
+      const found = categories.find(c => c.id === initialData.categoryId);
+      setCategoryName(found ? found.name : '');
+    } else {
+      setCategoryName('');
     }
-  }, [initialData]);
+  }, [initialData, categories]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -54,7 +60,7 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
     const newErrors = {};
     if (!formData.title.trim()) newErrors.title = 'Tiêu đề không được để trống.';
     if (!formData.anime.trim()) newErrors.anime = 'Tên bộ phim Anime không được để trống.';
-    if (!formData.categoryId) newErrors.categoryId = 'Vui lòng chọn danh mục.';
+    if (!categoryName.trim()) newErrors.categoryName = 'Danh mục thể loại không được để trống.';
     if (!formData.author.trim()) newErrors.author = 'Tên tác giả không được để trống.';
     if (!formData.imageUrl.trim()) {
       newErrors.imageUrl = 'Đường dẫn ảnh không được để trống.';
@@ -66,15 +72,56 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit({
-      ...formData,
-      downloads: Number(formData.downloads),
-      likes: Number(formData.likes),
-      rating: Number(formData.rating)
-    });
+    
+    setIsSubmitting(true);
+    try {
+      let resolvedCategoryId = '';
+      const cleanCategoryName = categoryName.trim();
+      
+      // Fetch fresh list of categories
+      const res = await fetch('http://localhost:4000/categories');
+      const currentCats = await res.json();
+      
+      const matchedCat = currentCats.find(
+        cat => cat.name.toLowerCase() === cleanCategoryName.toLowerCase()
+      );
+      
+      if (matchedCat) {
+        resolvedCategoryId = matchedCat.id;
+      } else {
+        const cleanId = 'cat-' + cleanCategoryName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const newCat = {
+          id: cleanId,
+          name: cleanCategoryName,
+          description: `Các hình nền thuộc phân loại ${cleanCategoryName}`
+        };
+        
+        const createRes = await fetch('http://localhost:4000/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCat)
+        });
+        
+        if (!createRes.ok) throw new Error();
+        resolvedCategoryId = cleanId;
+      }
+
+      onSubmit({
+        ...formData,
+        categoryId: resolvedCategoryId,
+        downloads: Number(formData.downloads),
+        likes: Number(formData.likes),
+        rating: Number(formData.rating)
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi đồng bộ danh mục thể loại mới!");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,21 +159,21 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
       <Row className="mb-3">
         <Form.Group as={Col} md="6" controlId="valCategory">
           <Form.Label>Danh mục thể loại</Form.Label>
-          <Form.Select
-            name="categoryId"
-            value={formData.categoryId}
-            onChange={handleChange}
-            isInvalid={!!errors.categoryId}
+          <Form.Control
+            type="text"
+            name="categoryName"
+            value={categoryName}
+            onChange={(e) => {
+              setCategoryName(e.target.value);
+              if (errors.categoryName) {
+                setErrors({ ...errors, categoryName: null });
+              }
+            }}
+            isInvalid={!!errors.categoryName}
             className="bg-dark text-white border-secondary"
-          >
-            <option value="">-- Chọn danh mục --</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </Form.Select>
-          <Form.Control.Feedback type="invalid">{errors.categoryId}</Form.Control.Feedback>
+            placeholder="Nhập danh mục (ví dụ: Yu-Gi-Oh!, Oregairu...)"
+          />
+          <Form.Control.Feedback type="invalid">{errors.categoryName}</Form.Control.Feedback>
         </Form.Group>
 
         <Form.Group as={Col} md="6" controlId="valAuthor">
@@ -259,8 +306,8 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
         <Button variant="secondary" onClick={onCancel}>
           Hủy bỏ
         </Button>
-        <Button variant="primary" type="submit">
-          {initialData ? "Cập nhật" : "Thêm mới"}
+        <Button variant="primary" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Đang xử lý..." : (initialData ? "Cập nhật" : "Thêm mới")}
         </Button>
       </div>
     </Form>
