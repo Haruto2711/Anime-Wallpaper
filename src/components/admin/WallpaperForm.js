@@ -24,6 +24,7 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
   });
 
   const [categoryName, setCategoryName] = useState('');
+  const [imageSource, setImageSource] = useState('url'); // 'url' or 'file'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -39,10 +40,30 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
       // Find matching category name from initial categoryId
       const found = categories.find(c => c.id === initialData.categoryId);
       setCategoryName(found ? found.name : '');
+      // Determine initial image source
+      setImageSource(initialData.imageUrl?.startsWith('data:') ? 'file' : 'url');
     } else {
       setCategoryName('');
+      setImageSource('url');
     }
   }, [initialData, categories]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: reader.result
+        }));
+        if (errors.imageUrl) {
+          setErrors(prev => ({ ...prev, imageUrl: null }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -63,8 +84,8 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
     if (!categoryName.trim()) newErrors.categoryName = 'Danh mục thể loại không được để trống.';
     if (!formData.author.trim()) newErrors.author = 'Tên tác giả không được để trống.';
     if (!formData.imageUrl.trim()) {
-      newErrors.imageUrl = 'Đường dẫn ảnh không được để trống.';
-    } else if (!formData.imageUrl.startsWith('/') && !formData.imageUrl.startsWith('http')) {
+      newErrors.imageUrl = 'Đường dẫn hoặc tệp ảnh không được để trống.';
+    } else if (imageSource === 'url' && !formData.imageUrl.startsWith('/') && !formData.imageUrl.startsWith('http')) {
       newErrors.imageUrl = 'Đường dẫn ảnh phải bắt đầu bằng "/" hoặc "http".';
     }
     
@@ -191,21 +212,62 @@ function WallpaperForm({ onSubmit, initialData, categories, onCancel }) {
         </Form.Group>
       </Row>
 
-      <Form.Group className="mb-3" controlId="valImageUrl">
-        <Form.Label>Đường dẫn hình ảnh (Image URL)</Form.Label>
-        <Form.Control
-          type="text"
-          name="imageUrl"
-          value={formData.imageUrl}
-          onChange={handleChange}
-          isInvalid={!!errors.imageUrl}
-          className="bg-dark text-white border-secondary"
-          placeholder="Ví dụ: /wallpapers/cyberpunk_girl.png hoặc link http"
-        />
-        <Form.Text className="text-muted">
-          Bạn có thể dùng các ảnh mẫu có sẵn: <code>/wallpapers/cyberpunk_girl.png</code>, <code>/wallpapers/fantasy_landscape.png</code>, <code>/wallpapers/samurai_sunset.png</code>, v.v.
-        </Form.Text>
-        <Form.Control.Feedback type="invalid">{errors.imageUrl}</Form.Control.Feedback>
+      <Form.Group className="mb-3">
+        <Form.Label>Nguồn hình ảnh (Image Source)</Form.Label>
+        <div className="d-flex gap-3 mb-2 text-white-50">
+          <Form.Check
+            type="radio"
+            id="adminSrcUrl"
+            label="Nhập URL ảnh / Dùng ảnh mẫu"
+            name="imageSource"
+            checked={imageSource === 'url'}
+            onChange={() => setImageSource('url')}
+            className="text-white-50"
+          />
+          <Form.Check
+            type="radio"
+            id="adminSrcFile"
+            label="Tải lên tệp ảnh từ máy tính"
+            name="imageSource"
+            checked={imageSource === 'file'}
+            onChange={() => setImageSource('file')}
+            className="text-white-50"
+          />
+        </div>
+
+        {imageSource === 'url' ? (
+          <>
+            <Form.Control
+              type="text"
+              name="imageUrl"
+              value={formData.imageUrl.startsWith('data:') ? '' : formData.imageUrl}
+              onChange={handleChange}
+              isInvalid={!!errors.imageUrl}
+              className="bg-dark text-white border-secondary"
+              placeholder="Ví dụ: /wallpapers/cyberpunk_girl.png hoặc link http"
+            />
+            <Form.Text className="text-muted">
+              Bạn có thể dùng các ảnh mẫu có sẵn: <code>/wallpapers/cyberpunk_girl.png</code>, <code>/wallpapers/fantasy_landscape.png</code>, <code>/wallpapers/samurai_sunset.png</code>, v.v.
+            </Form.Text>
+            <Form.Control.Feedback type="invalid">{errors.imageUrl}</Form.Control.Feedback>
+          </>
+        ) : (
+          <>
+            <Form.Control
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              isInvalid={!!errors.imageUrl}
+              className="bg-dark text-white border-secondary"
+            />
+            {formData.imageUrl.startsWith('data:') && (
+              <div className="mt-2 text-success" style={{ fontSize: '0.85rem' }}>
+                ✓ Đã nhận dữ liệu tệp ảnh thành công.
+              </div>
+            )}
+            <Form.Control.Feedback type="invalid">{errors.imageUrl}</Form.Control.Feedback>
+          </>
+        )}
       </Form.Group>
 
       <Row className="mb-3">

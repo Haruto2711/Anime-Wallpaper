@@ -60,9 +60,18 @@ function AdminPage() {
 
   // Create (Add new) handler
   const handleAddWallpaper = (newWp) => {
+    // Generate a sequential ID: wp-084, wp-085, etc.
+    const nextNum = wallpapers.length > 0
+      ? Math.max(...wallpapers.map(w => {
+          const num = parseInt(w.id.replace('wp-', ''));
+          return isNaN(num) ? 0 : num;
+        })) + 1
+      : 1;
+    const nextId = `wp-${String(nextNum).padStart(3, '0')}`;
+
     const wpWithId = {
       ...newWp,
-      id: `wp-${String(Date.now()).slice(-4)}`, // Generate a short ID
+      id: nextId,
       createdAt: new Date().toISOString()
     };
 
@@ -76,9 +85,9 @@ function AdminPage() {
         return res.json();
       })
       .then(data => {
-        setWallpapers(prev => [data, ...prev]);
+        loadData(); // Reload both wallpapers and categories (important for new categories!)
         setView('table');
-        showNotice('success', 'Thêm hình nền thành công vào database!');
+        showNotice('success', `Thêm hình nền "${data.title}" thành công!`);
       })
       .catch((err) => {
         console.error("Lỗi khi thêm hình nền:", err);
@@ -98,10 +107,10 @@ function AdminPage() {
         return res.json();
       })
       .then(data => {
-        setWallpapers(prev => prev.map(w => w.id === data.id ? data : w));
+        loadData(); // Reload all data to keep categories in sync
         setView('table');
         setEditingWp(null);
-        showNotice('success', 'Cập nhật hình nền thành công!');
+        showNotice('success', `Cập nhật hình nền "${data.title}" thành công!`);
       })
       .catch((err) => {
         console.error("Lỗi khi sửa hình nền:", err);
