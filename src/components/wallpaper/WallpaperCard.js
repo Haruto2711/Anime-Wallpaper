@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import { Heart, Download, Eye, Star } from 'lucide-react';
@@ -8,6 +8,17 @@ import { AuthContext } from '../../contexts/AuthContext';
 function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
   const navigate = useNavigate();
   const { isAuthenticated } = useContext(AuthContext);
+  const [betaEnabled, setBetaEnabled] = useState(() => {
+    return localStorage.getItem('beta_mode') === 'true';
+  });
+
+  useEffect(() => {
+    const handleBetaUpdate = () => {
+      setBetaEnabled(localStorage.getItem('beta_mode') === 'true');
+    };
+    window.addEventListener('beta-mode-updated', handleBetaUpdate);
+    return () => window.removeEventListener('beta-mode-updated', handleBetaUpdate);
+  }, []);
 
   const handleDownload = (e) => {
     e.stopPropagation(); // Avoid triggering card navigation
@@ -103,6 +114,13 @@ function WallpaperCard({ wallpaper, isFavorite, onToggleFavorite }) {
           <Card.Text className="text-info text-truncate mb-3" style={{ fontSize: '0.85rem' }}>
             {wallpaper.anime}
           </Card.Text>
+          {betaEnabled && (
+            <div className="p-2 mb-3 bg-dark rounded border border-danger text-danger" style={{ fontSize: '0.7rem', fontFamily: 'monospace' }}>
+              <div>ID: {wallpaper.id}</div>
+              <div>Type: {wallpaper.orientation}</div>
+              <div>Likes: {wallpaper.likes} | Downloads: {wallpaper.downloads}</div>
+            </div>
+          )}
         </div>
 
         <div>

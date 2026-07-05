@@ -1,11 +1,12 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
-import { Link } from 'react-router-dom';
+import Offcanvas from 'react-bootstrap/Offcanvas';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SettingsContext } from '../../contexts/SettingsContext';
 import { LogOut, LogIn, User, Plus, Bell, X, Pin, Grid, Scissors, CheckCircle, Settings } from 'lucide-react';
@@ -13,6 +14,7 @@ import { LogOut, LogIn, User, Plus, Bell, X, Pin, Grid, Scissors, CheckCircle, S
 function Header() {
   const { user, isAuthenticated, logout } = useContext(AuthContext);
   const { sakuraEnabled, setSakuraEnabled, accentColor, setAccentColor, sharpenEnabled, setSharpenEnabled } = useContext(SettingsContext);
+  const navigate = useNavigate();
   
   // Custom menus states
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -21,6 +23,160 @@ function Header() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showBoardModal, setShowBoardModal] = useState(false);
   const [showCollageModal, setShowCollageModal] = useState(false);
+
+  const [headerCategories, setHeaderCategories] = useState([]);
+  const [excludedCategories, setExcludedCategories] = useState(() => {
+    const saved = localStorage.getItem('excluded_categories');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [betaEnabled, setBetaEnabled] = useState(() => {
+    return localStorage.getItem('beta_mode') === 'true';
+  });
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showWidgetModal, setShowWidgetModal] = useState(false);
+  const [showFaqModal, setShowFaqModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  const [reportWpTitle, setReportWpTitle] = useState('');
+  const [reportReason, setReportReason] = useState('Bản quyền');
+  const [reportMessage, setReportMessage] = useState('');
+
+  useEffect(() => {
+    fetch('http://localhost:4000/categories')
+      .then(res => res.json())
+      .then(data => setHeaderCategories(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    const handleBetaUpdate = () => {
+      setBetaEnabled(localStorage.getItem('beta_mode') === 'true');
+    };
+    window.addEventListener('beta-mode-updated', handleBetaUpdate);
+    return () => window.removeEventListener('beta-mode-updated', handleBetaUpdate);
+  }, []);
+
+  const handleToggleCategoryFilter = (catId) => {
+    setExcludedCategories(prev => {
+      let updated;
+      if (prev.includes(catId)) {
+        updated = prev.filter(id => id !== catId);
+      } else {
+        updated = [...prev, catId];
+      }
+      localStorage.setItem('excluded_categories', JSON.stringify(updated));
+      window.dispatchEvent(new CustomEvent('category-filter-updated'));
+      return updated;
+    });
+  };
+
+  const handleToggleBeta = (val) => {
+    setBetaEnabled(val);
+    localStorage.setItem('beta_mode', val ? 'true' : 'false');
+    window.dispatchEvent(new CustomEvent('beta-mode-updated'));
+  };
+
+  const handleReportSubmit = (e) => {
+    e.preventDefault();
+    if (!reportWpTitle.trim()) {
+      alert("Vui lòng nhập tên hình nền cần báo cáo!");
+      return;
+    }
+    
+    const reportData = {
+      id: 'rep-' + Date.now(),
+      wallpaperTitle: reportWpTitle,
+      reason: reportReason,
+      message: reportMessage,
+      createdAt: new Date().toISOString()
+    };
+
+    fetch('http://localhost:4000/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reportData)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(() => {
+        alert("Báo cáo vi phạm đã được gửi thành công! Admin sẽ xem xét sớm nhất.");
+        setShowReportModal(false);
+        setReportWpTitle('');
+        setReportMessage('');
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Lỗi khi gửi báo cáo vi phạm. Vui lòng thử lại!");
+      });
+  };
+
+  // Dynamic notifications list
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('user_notifications');
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        id: 'notif-1',
+        title: 'Cập nhật kho ảnh SAO',
+        message: 'Admin đã thêm 29 hình nền Sword Art Online mới vào danh mục!',
+        read: false,
+        time: '10:00'
+      },
+      {
+        id: 'notif-2',
+        title: 'Tính năng bảo mật mới',
+        message: 'Đã kích hoạt tính năng bảo vệ bản quyền ảnh chống tải chuột phải và kéo thả.',
+        read: false,
+        time: '09:00'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    const handleNewWp = (e) => {
+      const newWp = e.detail;
+      setNotifications(prev => {
+        // Check for duplicate notifications just in case
+        if (prev.some(n => n.wpId === newWp.id)) return prev;
+
+        const updated = [
+          {
+            id: 'notif-' + newWp.id,
+            title: 'Ảnh mới tải lên!',
+            message: `Hình nền "${newWp.title}" vừa được thêm bởi ${newWp.author || 'Minh Thanh'}.`,
+            read: false,
+            time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            wpId: newWp.id
+          },
+          ...prev
+        ];
+        localStorage.setItem('user_notifications', JSON.stringify(updated));
+        return updated;
+      });
+    };
+
+    window.addEventListener('new-wallpaper-uploaded', handleNewWp);
+    return () => window.removeEventListener('new-wallpaper-uploaded', handleNewWp);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleOpenNotifMenu = () => {
+    setShowNotifMenu(!showNotifMenu);
+    setShowCreateMenu(false);
+    
+    // Mark all as read when menu is toggled open
+    if (!showNotifMenu) {
+      setNotifications(prev => {
+        const updated = prev.map(n => ({ ...n, read: true }));
+        localStorage.setItem('user_notifications', JSON.stringify(updated));
+        return updated;
+      });
+    }
+  };
 
   // Form states for Upload
   const [newTitle, setNewTitle] = useState('');
@@ -127,8 +283,13 @@ function Header() {
     <>
       <Navbar expand="lg" variant="dark" className="glass-panel border-bottom border-secondary shadow-sm py-3 sticky-top">
         <Container>
-          <Navbar.Brand as={Link} to="/" className="fw-bold text-primary display-font" style={{ letterSpacing: '-0.02em', fontSize: '1.4rem' }}>
+          <Navbar.Brand as={Link} to="/" className="fw-bold text-primary display-font d-flex align-items-center gap-2" style={{ letterSpacing: '-0.02em', fontSize: '1.4rem' }}>
             Anime Wallpaper Hub
+            {betaEnabled && (
+              <span className="badge rounded-pill bg-danger animate-pulse" style={{ fontSize: '0.65rem', padding: '0.2rem 0.45rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Beta
+              </span>
+            )}
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
@@ -230,22 +391,21 @@ function Header() {
                   <div className="position-relative">
                     <span 
                       className="nav-link text-light-50 hover-text-white d-flex align-items-center"
-                      onClick={() => {
-                        setShowNotifMenu(!showNotifMenu);
-                        setShowCreateMenu(false);
-                      }}
+                      onClick={handleOpenNotifMenu}
                       style={{ cursor: 'pointer', userSelect: 'none' }}
                     >
                       <Bell size={20} />
-                      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.55rem', padding: '0.15rem 0.3rem', transform: 'translate(20%, -30%)' }}>
-                        2
-                      </span>
+                      {unreadCount > 0 && (
+                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.55rem', padding: '0.15rem 0.3rem', transform: 'translate(20%, -30%)' }}>
+                          {unreadCount}
+                        </span>
+                      )}
                     </span>
 
                     {showNotifMenu && (
                       <div 
                         className="position-absolute bg-dark border border-secondary rounded p-3 shadow-lg"
-                        style={{ top: '100%', right: '0', zIndex: 1050, width: '300px', marginTop: '10px' }}
+                        style={{ top: '100%', right: '0', zIndex: 1050, width: '320px', marginTop: '10px' }}
                       >
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <span className="fw-bold text-white fs-6">Thông báo</span>
@@ -254,14 +414,36 @@ function Header() {
                           </button>
                         </div>
                         <div className="d-flex flex-column gap-2" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                          <div className="p-2 border-bottom border-secondary" style={{ fontSize: '0.8rem' }}>
-                            <div className="text-white fw-semibold">Cập nhật kho ảnh SAO</div>
-                            <div className="text-white-50" style={{ fontSize: '0.75rem' }}>Admin đã thêm 29 hình nền Sword Art Online mới vào danh mục!</div>
-                          </div>
-                          <div className="p-2" style={{ fontSize: '0.8rem' }}>
-                            <div className="text-white fw-semibold">Tính năng bảo mật mới</div>
-                            <div className="text-white-50" style={{ fontSize: '0.75rem' }}>Đã kích hoạt tính năng bảo vệ bản quyền ảnh chống tải chuột phải và kéo thả.</div>
-                          </div>
+                          {notifications.length === 0 ? (
+                            <div className="text-center text-muted py-3" style={{ fontSize: '0.8rem' }}>
+                              Không có thông báo nào.
+                            </div>
+                          ) : (
+                            notifications.map((notif) => (
+                              <div 
+                                key={notif.id} 
+                                className="p-2 border-bottom border-secondary position-relative hover-highlight" 
+                                style={{ 
+                                  fontSize: '0.8rem', 
+                                  cursor: notif.wpId ? 'pointer' : 'default',
+                                  backgroundColor: notif.read ? 'transparent' : 'rgba(255, 255, 255, 0.05)',
+                                  transition: 'background-color 0.2s ease-in-out'
+                                }}
+                                onClick={() => {
+                                  if (notif.wpId) {
+                                    navigate(`/wallpaper/${notif.wpId}`);
+                                    setShowNotifMenu(false);
+                                  }
+                                }}
+                              >
+                                <div className="d-flex justify-content-between">
+                                  <span className="text-white fw-semibold">{notif.title}</span>
+                                  <span className="text-muted" style={{ fontSize: '0.7rem' }}>{notif.time}</span>
+                                </div>
+                                <div className="text-white-50 mt-1" style={{ fontSize: '0.75rem' }}>{notif.message}</div>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     )}
@@ -485,86 +667,359 @@ function Header() {
         </Modal.Footer>
       </Modal>
 
-      {/* Settings Modal */}
-      <Modal show={showSettingsModal} onHide={() => setShowSettingsModal(false)} centered contentClassName="glass-panel border-secondary text-white shadow-lg">
-        <Modal.Header closeButton closeVariant="white" className="border-secondary">
-          <Modal.Title className="d-flex align-items-center gap-2">
-            <Settings size={22} className="text-primary" /> Cài đặt giao diện
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="d-flex flex-column gap-4 py-4">
-          {/* 1. Falling Sakura Petals Toggle */}
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h6 className="mb-0 text-white">Hiệu ứng Hoa anh đào rơi</h6>
-              <small className="text-white-50">Bật/Tắt hiệu ứng cánh hoa rơi trên nền trang web</small>
+      {/* Settings & Support Offcanvas (Slide-out menu matching Pinterest) */}
+      <Offcanvas 
+        show={showSettingsModal} 
+        onHide={() => setShowSettingsModal(false)} 
+        placement="end"
+        className="glass-panel text-white border-start border-secondary shadow-lg"
+        style={{ width: '380px' }}
+      >
+        <Offcanvas.Header closeButton closeVariant="white" className="border-bottom border-secondary">
+          <Offcanvas.Title className="fw-bold d-flex align-items-center gap-2" style={{ color: 'var(--sakura-primary, #ff85a2)' }}>
+            <Settings size={22} /> Cài đặt & Hỗ trợ
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        
+        <Offcanvas.Body className="d-flex flex-column gap-4 py-4" style={{ overflowY: 'auto' }}>
+          {/* Section 1: Cài đặt Giao diện */}
+          <div>
+            <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+              Cài đặt giao diện
+            </h6>
+            <div className="d-flex flex-column gap-3">
+              {/* Sakura Falling */}
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <div className="fw-semibold">Cánh hoa anh đào rơi</div>
+                  <small className="text-white-50" style={{ fontSize: '0.75rem' }}>Bật/Tắt cánh hoa rơi trên màn hình</small>
+                </div>
+                <Form.Check 
+                  type="switch"
+                  id="sakura-switch"
+                  checked={sakuraEnabled}
+                  onChange={(e) => setSakuraEnabled(e.target.checked)}
+                  className="fs-5"
+                />
+              </div>
+
+              {/* Sharpen Filter */}
+              <div className="d-flex justify-content-between align-items-center border-top border-secondary-subtle pt-3">
+                <div>
+                  <div className="fw-semibold">Làm nét ảnh cực đại</div>
+                  <small className="text-white-50" style={{ fontSize: '0.75rem' }}>Bật/Tắt bộ lọc nét tối ưu hình nền</small>
+                </div>
+                <Form.Check 
+                  type="switch"
+                  id="sharpen-switch"
+                  checked={sharpenEnabled}
+                  onChange={(e) => setSharpenEnabled(e.target.checked)}
+                  className="fs-5"
+                />
+              </div>
+
+              {/* Theme Selector */}
+              <div className="border-top border-secondary-subtle pt-3">
+                <div className="fw-semibold mb-2">Tông màu chủ đạo</div>
+                <div className="d-flex gap-2 flex-wrap">
+                  <Button 
+                    size="sm"
+                    variant={accentColor === 'pink' ? 'primary' : 'outline-secondary'}
+                    onClick={() => setAccentColor('pink')}
+                    className="d-flex align-items-center gap-1 text-white border-secondary"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ff85a2' }} />
+                    Hồng Sakura
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant={accentColor === 'purple' ? 'primary' : 'outline-secondary'}
+                    onClick={() => setAccentColor('purple')}
+                    className="d-flex align-items-center gap-1 text-white border-secondary"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#b5179e' }} />
+                    Tím Thạch Lan
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant={accentColor === 'blue' ? 'primary' : 'outline-secondary'}
+                    onClick={() => setAccentColor('blue')}
+                    className="d-flex align-items-center gap-1 text-white border-secondary"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00b4d8' }} />
+                    Xanh Cyber
+                  </Button>
+                </div>
+              </div>
             </div>
-            <Form.Check 
-              type="switch"
-              id="sakura-switch"
-              checked={sakuraEnabled}
-              onChange={(e) => setSakuraEnabled(e.target.checked)}
-              className="fs-5"
-            />
           </div>
 
-          {/* 2. Sharpen Filters Toggle */}
-          <div className="d-flex justify-content-between align-items-center border-top border-secondary pt-3">
-            <div>
-              <h6 className="mb-0 text-white">Tự động làm nét ảnh cực đại</h6>
-              <small className="text-white-50">Bật/Tắt bộ lọc làm nét cho toàn bộ hình nền</small>
+          {/* Section 2: Tinh chỉnh Đề xuất */}
+          {headerCategories.length > 0 && (
+            <div className="border-top border-secondary pt-3">
+              <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+                Tinh chỉnh đề xuất của bạn
+              </h6>
+              <small className="text-white-50 d-block mb-3" style={{ fontSize: '0.8rem' }}>
+                Chọn các danh mục ảnh hiển thị ở Trang chủ:
+              </small>
+              <div className="d-flex flex-column gap-2 ps-1" style={{ maxHeight: '140px', overflowY: 'auto' }}>
+                {headerCategories.map(cat => (
+                  <Form.Check 
+                    key={cat.id}
+                    type="checkbox"
+                    id={`notif-filter-${cat.id}`}
+                    label={cat.name}
+                    checked={!excludedCategories.includes(cat.id)}
+                    onChange={() => handleToggleCategoryFilter(cat.id)}
+                    className="text-white-50"
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                ))}
+              </div>
             </div>
-            <Form.Check 
-              type="switch"
-              id="sharpen-switch"
-              checked={sharpenEnabled}
-              onChange={(e) => setSharpenEnabled(e.target.checked)}
-              className="fs-5"
-            />
-          </div>
+          )}
 
-          {/* 3. Theme Color Selection */}
+          {/* Section 3: Tinh chỉnh & Liên kết */}
           <div className="border-top border-secondary pt-3">
-            <h6 className="mb-2 text-white">Tông màu giao diện chủ đạo</h6>
-            <small className="text-white-50 d-block mb-3">Chọn màu sắc điểm nhấn và hiệu ứng màu hoa rơi tương ứng</small>
-            <div className="d-flex gap-3 justify-content-center">
-              {/* Pink Sakura button */}
-              <Button 
-                variant={accentColor === 'pink' ? 'primary' : 'outline-primary'}
-                className="px-3 py-2 d-flex align-items-center gap-2"
-                onClick={() => setAccentColor('pink')}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff85a2' }} />
-                Hồng Sakura
-              </Button>
+            <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+              Tinh chỉnh & Liên kết
+            </h6>
+            <ul className="list-unstyled d-flex flex-column gap-3 mb-0" style={{ fontSize: '0.9rem' }}>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { setShowReportModal(true); setShowSettingsModal(false); }}
+                >
+                  <span>Cổng thông tin báo cáo vi phạm</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Ứng dụng Windows PWA Desktop: Bạn có thể cài đặt bằng cách nhấn biểu tượng Cài đặt (App Install) ở thanh địa chỉ trình duyệt Chrome/Edge của bạn!")}
+                >
+                  <span>Cài đặt ứng dụng Windows</span>
+                </span>
+              </li>
+              <li className="d-flex justify-content-between align-items-center">
+                <div>
+                  <span className="text-light-50">Làm người thử nghiệm beta</span>
+                  <small className="text-white-50 d-block" style={{ fontSize: '0.7rem' }}>Bật tính năng chẩn đoán thẻ ảnh</small>
+                </div>
+                <Form.Check 
+                  type="switch"
+                  id="beta-toggle"
+                  checked={betaEnabled}
+                  onChange={(e) => handleToggleBeta(e.target.checked)}
+                  className="fs-6"
+                />
+              </li>
+            </ul>
+          </div>
 
-              {/* Purple Wisteria button */}
-              <Button 
-                variant={accentColor === 'purple' ? 'primary' : 'outline-primary'}
-                className="px-3 py-2 d-flex align-items-center gap-2"
-                onClick={() => setAccentColor('purple')}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#b5179e' }} />
-                Tím Thạch Lan
-              </Button>
+          {/* Section 4: Hỗ trợ */}
+          <div className="border-top border-secondary pt-3">
+            <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+              Hỗ trợ
+            </h6>
+            <ul className="list-unstyled d-flex flex-column gap-3 mb-0" style={{ fontSize: '0.9rem' }}>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { setShowFaqModal(true); setShowSettingsModal(false); }}
+                >
+                  <span>Trung tâm trợ giúp (FAQ)</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { setShowWidgetModal(true); setShowSettingsModal(false); }}
+                >
+                  <span>Tạo widget nhúng</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { setShowReportModal(true); setShowSettingsModal(false); }}
+                >
+                  <span>Lượt xóa (Yêu cầu gỡ ảnh DMCA)</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Quảng cáo đã được cá nhân hóa dựa trên tùy chọn bộ lọc thể loại của bạn.")}
+                >
+                  <span>Quảng cáo Cá nhân hóa</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => { setShowPrivacyModal(true); setShowSettingsModal(false); }}
+                >
+                  <span>Quyền riêng tư & Điều khoản của bạn</span>
+                </span>
+              </li>
+            </ul>
+          </div>
 
-              {/* Blue Cyber button */}
-              <Button 
-                variant={accentColor === 'blue' ? 'primary' : 'outline-primary'}
-                className="px-3 py-2 d-flex align-items-center gap-2"
-                onClick={() => setAccentColor('blue')}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#00b4d8' }} />
-                Xanh Cyber
-              </Button>
+          {/* Section 5: Tài nguyên */}
+          <div className="border-top border-secondary pt-3 mt-auto">
+            <div className="d-flex flex-wrap gap-2 text-white-50" style={{ fontSize: '0.75rem' }}>
+              <a href="#about" className="text-decoration-none text-white-50 hover-text-white">Giới thiệu</a>
+              <span>•</span>
+              <a href="#press" className="text-decoration-none text-white-50 hover-text-white">Báo chí</a>
+              <span>•</span>
+              <a href="#biz" className="text-decoration-none text-white-50 hover-text-white">Doanh nghiệp</a>
+              <span>•</span>
+              <a href="#careers" className="text-decoration-none text-white-50 hover-text-white">Nghề nghiệp</a>
+              <span>•</span>
+              <a href="#devs" className="text-decoration-none text-white-50 hover-text-white">Nhà phát triển</a>
             </div>
+            <div className="text-muted mt-2" style={{ fontSize: '0.7rem' }}>
+              © 2026 AnimeWallpaper Inc.
+            </div>
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
+
+      {/* 1. Report Modal */}
+      <Modal show={showReportModal} onHide={() => setShowReportModal(false)} centered contentClassName="glass-panel border-secondary text-white shadow-lg">
+        <Modal.Header closeButton closeVariant="white" className="border-secondary">
+          <Modal.Title className="fw-bold fs-5">Báo cáo vi phạm & Yêu cầu gỡ ảnh</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleReportSubmit}>
+          <Modal.Body className="d-flex flex-column gap-3">
+            <Form.Group controlId="repTitle">
+              <Form.Label>Tên / Đường dẫn hình ảnh vi phạm</Form.Label>
+              <Form.Control 
+                type="text" 
+                placeholder="Ví dụ: Neon Tokyo Girl hoặc đường dẫn /wallpapers/..."
+                value={reportWpTitle}
+                onChange={(e) => setReportWpTitle(e.target.value)}
+                required
+                className="bg-dark text-white border-secondary"
+              />
+            </Form.Group>
+            <Form.Group controlId="repReason">
+              <Form.Label>Lý do báo cáo</Form.Label>
+              <Form.Select 
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="bg-dark text-white border-secondary"
+              >
+                <option value="Bản quyền">Vi phạm bản quyền (DMCA Removal)</option>
+                <option value="Không phù hợp">Nội dung không phù hợp / NSFW</option>
+                <option value="Link lỗi">Đường dẫn ảnh bị lỗi / Không tải được</option>
+                <option value="Khác">Lý do khác</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group controlId="repMsg">
+              <Form.Label>Chi tiết khiếu nại (Không bắt buộc)</Form.Label>
+              <Form.Control 
+                as="textarea" 
+                rows={3} 
+                placeholder="Mô tả chi tiết để giúp ban quản trị xem xét..."
+                value={reportMessage}
+                onChange={(e) => setReportMessage(e.target.value)}
+                className="bg-dark text-white border-secondary"
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer className="border-secondary">
+            <Button variant="secondary" onClick={() => setShowReportModal(false)}>Hủy</Button>
+            <Button variant="danger" type="submit">Gửi báo cáo</Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* 2. Widget Modal */}
+      <Modal show={showWidgetModal} onHide={() => setShowWidgetModal(false)} centered contentClassName="glass-panel border-secondary text-white shadow-lg">
+        <Modal.Header closeButton closeVariant="white" className="border-secondary">
+          <Modal.Title className="fw-bold fs-5">Mã nhúng Widget hình nền</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex flex-column gap-3">
+          <p className="text-white-50 mb-1" style={{ fontSize: '0.85rem' }}>Sao chép mã HTML dưới đây để nhúng widget trình chiếu hình nền ngẫu nhiên lên trang web hoặc blog của bạn:</p>
+          <Form.Control 
+            as="textarea"
+            readOnly
+            rows={3}
+            value={`<iframe src="http://localhost:3000/widget" width="100%" height="450" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`}
+            className="bg-dark text-info border-secondary font-monospace"
+            style={{ fontSize: '0.8rem' }}
+          />
+          <Button 
+            variant="primary" 
+            onClick={() => {
+              navigator.clipboard.writeText(`<iframe src="http://localhost:3000/widget" width="100%" height="450" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`);
+              alert("Đã sao chép mã nhúng thành công!");
+            }}
+          >
+            Sao chép mã nhúng
+          </Button>
+        </Modal.Body>
+        <Modal.Footer className="border-secondary">
+          <Button variant="secondary" onClick={() => setShowWidgetModal(false)}>Đóng</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* 3. FAQ Modal */}
+      <Modal show={showFaqModal} onHide={() => setShowFaqModal(false)} centered size="lg" contentClassName="glass-panel border-secondary text-white shadow-lg">
+        <Modal.Header closeButton closeVariant="white" className="border-secondary">
+          <Modal.Title className="fw-bold fs-5">Trung tâm Trợ giúp (FAQ)</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex flex-column gap-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <div>
+            <h6 className="text-primary fw-bold mb-1">Q1: Làm cách nào để tải hình nền chất lượng gốc?</h6>
+            <p className="text-white-50" style={{ fontSize: '0.85rem' }}>A1: Nhấp vào nút "Chi tiết" ở hình nền bạn thích, sau đó nhấp nút "Tải ảnh chất lượng cao". Bạn cần đăng nhập tài khoản để thực hiện thao tác tải ảnh này.</p>
+          </div>
+          <hr className="border-secondary my-1" />
+          <div>
+            <h6 className="text-primary fw-bold mb-1">Q2: Tôi có thể đăng tải hình nền của riêng mình lên trang web không?</h6>
+            <p className="text-white-50" style={{ fontSize: '0.85rem' }}>A2: Có! Sau khi đăng nhập, nhấp vào nút "Tạo" ở thanh menu trên cùng, chọn "Tải hình nền lên" và điền các thông tin để chia sẻ hình nền lên hệ thống.</p>
+          </div>
+          <hr className="border-secondary my-1" />
+          <div>
+            <h6 className="text-primary fw-bold mb-1">Q3: Chế độ thử nghiệm Beta làm gì?</h6>
+            <p className="text-white-50" style={{ fontSize: '0.85rem' }}>A3: Chế độ Beta mở ra các công cụ phân tích và thông số kỹ thuật (ID, Orientation, Likes count, Downloads) trực quan ngay trên mỗi thẻ hình nền, giúp các quản trị viên và nhà phát triển dễ dàng theo dõi.</p>
           </div>
         </Modal.Body>
         <Modal.Footer className="border-secondary">
-          <Button variant="primary" onClick={() => setShowSettingsModal(false)}>Đóng cài đặt</Button>
+          <Button variant="secondary" onClick={() => setShowFaqModal(false)}>Đóng</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* 4. Privacy Policy Modal */}
+      <Modal show={showPrivacyModal} onHide={() => setShowPrivacyModal(false)} centered size="lg" contentClassName="glass-panel border-secondary text-white shadow-lg">
+        <Modal.Header closeButton closeVariant="white" className="border-secondary">
+          <Modal.Title className="fw-bold fs-5">Quyền riêng tư & Điều khoản sử dụng</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex flex-column gap-3" style={{ maxHeight: '400px', overflowY: 'auto', fontSize: '0.85rem' }}>
+          <h6 className="text-primary fw-bold mb-0">1. Quy định sử dụng hình ảnh</h6>
+          <p className="text-white-50">Tần cả hình ảnh và hình nền được chia sẻ trên Anime Wallpaper Hub thuộc về tác giả tương ứng. Các nội dung được cung cấp miễn phí cho mục đích phi thương mại (hình nền cá nhân, học tập...). Nghiêm cấm sử dụng cho mục đích thương mại khi chưa có sự đồng ý của tác giả.</p>
+          
+          <h6 className="text-primary fw-bold mb-0">2. Chính sách quyền riêng tư</h6>
+          <p className="text-white-50">Chúng tôi tôn trọng quyền riêng tư của bạn. Hệ thống chỉ lưu trữ các thông tin cơ bản để vận hành tài khoản (Tên đăng nhập, Mật khẩu đã được mã hóa) và tùy chọn sở thích cá nhân của bạn (Lịch sử thích ảnh, cài đặt Sakura...). Chúng tôi cam kết không chia sẻ dữ liệu cho bên thứ ba.</p>
+
+          <h6 className="text-primary fw-bold mb-0">3. Báo cáo bản quyền (DMCA)</h6>
+          <p className="text-white-50">Nếu bạn là chủ sở hữu bản quyền của bất kỳ hình ảnh nào trên trang web này và muốn gỡ bỏ, xin vui lòng sử dụng "Cổng thông tin báo cáo vi phạm" trong cài đặt để gửi yêu cầu gỡ bỏ nhanh nhất. Ban quản trị cam kết xử lý trong vòng 24 giờ.</p>
+        </Modal.Body>
+        <Modal.Footer className="border-secondary">
+          <Button variant="secondary" onClick={() => setShowPrivacyModal(false)}>Đồng ý</Button>
         </Modal.Footer>
       </Modal>
     </>
