@@ -28,8 +28,25 @@ function WallpaperGrid({ searchTerm = '', selectedCategory = null, favorites = [
       });
   }, []);
 
-  // Filter wallpapers based on search term and category
+  const [excludedCats, setExcludedCats] = useState(() => {
+    const saved = localStorage.getItem('excluded_categories');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      const saved = localStorage.getItem('excluded_categories');
+      setExcludedCats(saved ? JSON.parse(saved) : []);
+    };
+    window.addEventListener('category-filter-updated', handleUpdate);
+    return () => window.removeEventListener('category-filter-updated', handleUpdate);
+  }, []);
+
+  // Filter wallpapers based on search term, category and excluded categories
   const filteredWallpapers = wallpapers.filter((wp) => {
+    // Hide wallpapers in excluded categories from "Tinh chỉnh đề xuất"
+    if (excludedCats.includes(wp.categoryId)) return false;
+
     const matchesSearch = 
       wp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       wp.anime.toLowerCase().includes(searchTerm.toLowerCase());
@@ -43,7 +60,7 @@ function WallpaperGrid({ searchTerm = '', selectedCategory = null, favorites = [
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, excludedCats]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredWallpapers.length / WALLPAPERS_PER_PAGE);
