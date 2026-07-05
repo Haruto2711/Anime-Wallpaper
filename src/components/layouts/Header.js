@@ -62,6 +62,21 @@ function Header() {
   const [widgetHeight, setWidgetHeight] = useState(450);
   const [widgetCategory, setWidgetCategory] = useState('all');
   const [widgetTheme, setWidgetTheme] = useState('pink');
+  const [widgetSizePreset, setWidgetSizePreset] = useState('medium');
+
+  const handleWidgetPresetChange = (preset) => {
+    setWidgetSizePreset(preset);
+    if (preset === 'small') {
+      setWidgetWidth(300);
+      setWidgetHeight(400);
+    } else if (preset === 'medium') {
+      setWidgetWidth(350);
+      setWidgetHeight(450);
+    } else if (preset === 'large') {
+      setWidgetWidth(400);
+      setWidgetHeight(500);
+    }
+  };
 
   useEffect(() => {
     fetch('http://localhost:4000/categories')
@@ -100,6 +115,7 @@ function Header() {
     if (showReportModal && activeReportTab === 'history') {
       loadSubmittedReports();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showReportModal, activeReportTab]);
 
   const handleToggleCategoryFilter = (catId) => {
@@ -1088,30 +1104,49 @@ function Header() {
                 </Form.Select>
               </Form.Group>
 
-              <Row>
-                <Col>
-                  <Form.Group controlId="widW">
-                    <Form.Label style={{ fontSize: '0.85rem' }}>Chiều rộng (px)</Form.Label>
-                    <Form.Control 
-                      type="number"
-                      value={widgetWidth}
-                      onChange={(e) => setWidgetWidth(Number(e.target.value))}
-                      className="bg-dark text-white border-secondary"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group controlId="widH">
-                    <Form.Label style={{ fontSize: '0.85rem' }}>Chiều cao (px)</Form.Label>
-                    <Form.Control 
-                      type="number"
-                      value={widgetHeight}
-                      onChange={(e) => setWidgetHeight(Number(e.target.value))}
-                      className="bg-dark text-white border-secondary"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+              <Form.Group controlId="widSizePreset">
+                <Form.Label style={{ fontSize: '0.85rem' }}>Kích thước hiển thị Widget</Form.Label>
+                <Form.Select 
+                  value={widgetSizePreset}
+                  onChange={(e) => handleWidgetPresetChange(e.target.value)}
+                  className="bg-dark text-white border-secondary"
+                >
+                  <option value="small">Nhỏ (300 x 400 pixel)</option>
+                  <option value="medium">Trung bình (350 x 450 pixel) [Khuyên dùng]</option>
+                  <option value="large">Lớn (400 x 500 pixel)</option>
+                  <option value="custom">Tự tùy chỉnh kích thước</option>
+                </Form.Select>
+              </Form.Group>
+
+              {widgetSizePreset === 'custom' && (
+                <Row className="mt-2 animate-fade-in">
+                  <Col>
+                    <Form.Group controlId="widW">
+                      <Form.Label style={{ fontSize: '0.8rem' }}>Chiều rộng (pixel)</Form.Label>
+                      <Form.Control 
+                        type="number"
+                        value={widgetWidth}
+                        onChange={(e) => setWidgetWidth(Number(e.target.value))}
+                        className="bg-dark text-white border-secondary"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col>
+                    <Form.Group controlId="widH">
+                      <Form.Label style={{ fontSize: '0.8rem' }}>Chiều cao (pixel)</Form.Label>
+                      <Form.Control 
+                        type="number"
+                        value={widgetHeight}
+                        onChange={(e) => setWidgetHeight(Number(e.target.value))}
+                        className="bg-dark text-white border-secondary"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <div className="text-white-50 mt-1 d-block" style={{ fontSize: '0.75rem' }}>
+                    * Pixel (viết tắt là px) là các điểm ảnh đo đạc kích thước hiển thị trên trang web của bạn.
+                  </div>
+                </Row>
+              )}
 
               <div className="mt-2">
                 <Form.Label style={{ fontSize: '0.85rem' }}>Mã HTML nhúng trang web:</Form.Label>
