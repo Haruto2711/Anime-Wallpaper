@@ -1,5 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Button from 'react-bootstrap/Button';
@@ -42,6 +44,25 @@ function Header() {
   const [reportReason, setReportReason] = useState('Bản quyền');
   const [reportMessage, setReportMessage] = useState('');
 
+  // Report history tracking
+  const [myReportIds, setMyReportIds] = useState(() => {
+    const saved = localStorage.getItem('my_reports');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [submittedReports, setSubmittedReports] = useState([]);
+  const [activeReportTab, setActiveReportTab] = useState('submit'); // 'submit' | 'history'
+
+  // Personalized Ads settings
+  const [adsEnabled, setAdsEnabled] = useState(() => {
+    return localStorage.getItem('personalized_ads') !== 'false';
+  });
+
+  // Widget customizer states
+  const [widgetWidth, setWidgetWidth] = useState(350);
+  const [widgetHeight, setWidgetHeight] = useState(450);
+  const [widgetCategory, setWidgetCategory] = useState('all');
+  const [widgetTheme, setWidgetTheme] = useState('pink');
+
   useEffect(() => {
     fetch('http://localhost:4000/categories')
       .then(res => res.json())
@@ -56,6 +77,30 @@ function Header() {
     window.addEventListener('beta-mode-updated', handleBetaUpdate);
     return () => window.removeEventListener('beta-mode-updated', handleBetaUpdate);
   }, []);
+
+  // Load report history
+  const loadSubmittedReports = () => {
+    if (myReportIds.length === 0) {
+      setSubmittedReports([]);
+      return;
+    }
+    fetch('http://localhost:4000/reports')
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        const filtered = data.filter(rep => myReportIds.includes(rep.id));
+        setSubmittedReports(filtered);
+      })
+      .catch(err => console.error("Error loading reports history:", err));
+  };
+
+  useEffect(() => {
+    if (showReportModal && activeReportTab === 'history') {
+      loadSubmittedReports();
+    }
+  }, [showReportModal, activeReportTab]);
 
   const handleToggleCategoryFilter = (catId) => {
     setExcludedCategories(prev => {
@@ -75,6 +120,11 @@ function Header() {
     setBetaEnabled(val);
     localStorage.setItem('beta_mode', val ? 'true' : 'false');
     window.dispatchEvent(new CustomEvent('beta-mode-updated'));
+  };
+
+  const handleToggleAds = (val) => {
+    setAdsEnabled(val);
+    localStorage.setItem('personalized_ads', val ? 'true' : 'false');
   };
 
   const handleReportSubmit = (e) => {
@@ -101,7 +151,12 @@ function Header() {
         if (!res.ok) throw new Error();
         return res.json();
       })
-      .then(() => {
+      .then((data) => {
+        // Save report ID locally
+        const updatedReportIds = [...myReportIds, data.id];
+        setMyReportIds(updatedReportIds);
+        localStorage.setItem('my_reports', JSON.stringify(updatedReportIds));
+
         alert("Báo cáo vi phạm đã được gửi thành công! Admin sẽ xem xét sớm nhất.");
         setShowReportModal(false);
         setReportWpTitle('');
@@ -856,14 +911,18 @@ function Header() {
                   <span>Lượt xóa (Yêu cầu gỡ ảnh DMCA)</span>
                 </span>
               </li>
-              <li>
-                <span 
-                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => alert("Quảng cáo đã được cá nhân hóa dựa trên tùy chọn bộ lọc thể loại của bạn.")}
-                >
-                  <span>Quảng cáo Cá nhân hóa</span>
-                </span>
+              <li className="d-flex justify-content-between align-items-center">
+                <div>
+                  <span className="text-light-50">Quảng cáo Cá nhân hóa</span>
+                  <small className="text-white-50 d-block" style={{ fontSize: '0.7rem' }}>Tối ưu quảng cáo theo chủ đề bạn thích</small>
+                </div>
+                <Form.Check 
+                  type="switch"
+                  id="ads-toggle"
+                  checked={adsEnabled}
+                  onChange={(e) => handleToggleAds(e.target.checked)}
+                  className="fs-6"
+                />
               </li>
               <li>
                 <span 
@@ -902,75 +961,245 @@ function Header() {
         <Modal.Header closeButton closeVariant="white" className="border-secondary">
           <Modal.Title className="fw-bold fs-5">Báo cáo vi phạm & Yêu cầu gỡ ảnh</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={handleReportSubmit}>
-          <Modal.Body className="d-flex flex-column gap-3">
-            <Form.Group controlId="repTitle">
-              <Form.Label>Tên / Đường dẫn hình ảnh vi phạm</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Ví dụ: Neon Tokyo Girl hoặc đường dẫn /wallpapers/..."
-                value={reportWpTitle}
-                onChange={(e) => setReportWpTitle(e.target.value)}
-                required
-                className="bg-dark text-white border-secondary"
-              />
-            </Form.Group>
-            <Form.Group controlId="repReason">
-              <Form.Label>Lý do báo cáo</Form.Label>
-              <Form.Select 
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                className="bg-dark text-white border-secondary"
-              >
-                <option value="Bản quyền">Vi phạm bản quyền (DMCA Removal)</option>
-                <option value="Không phù hợp">Nội dung không phù hợp / NSFW</option>
-                <option value="Link lỗi">Đường dẫn ảnh bị lỗi / Không tải được</option>
-                <option value="Khác">Lý do khác</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group controlId="repMsg">
-              <Form.Label>Chi tiết khiếu nại (Không bắt buộc)</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3} 
-                placeholder="Mô tả chi tiết để giúp ban quản trị xem xét..."
-                value={reportMessage}
-                onChange={(e) => setReportMessage(e.target.value)}
-                className="bg-dark text-white border-secondary"
-              />
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer className="border-secondary">
-            <Button variant="secondary" onClick={() => setShowReportModal(false)}>Hủy</Button>
-            <Button variant="danger" type="submit">Gửi báo cáo</Button>
-          </Modal.Footer>
-        </Form>
+        <Modal.Body className="py-3">
+          <Nav variant="tabs" activeKey={activeReportTab} onSelect={(k) => setActiveReportTab(k)} className="mb-3 border-secondary">
+            <Nav.Item>
+              <Nav.Link eventKey="submit" className={`text-white border-secondary ${activeReportTab === 'submit' ? 'bg-secondary' : 'bg-dark'}`}>Gửi yêu cầu mới</Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="history" className={`text-white border-secondary ${activeReportTab === 'history' ? 'bg-secondary' : 'bg-dark'}`}>Lịch sử yêu cầu ({myReportIds.length})</Nav.Link>
+            </Nav.Item>
+          </Nav>
+
+          {activeReportTab === 'submit' ? (
+            <Form onSubmit={handleReportSubmit}>
+              <div className="d-flex flex-column gap-3">
+                <Form.Group controlId="repTitle">
+                  <Form.Label>Tên hoặc Đường dẫn hình ảnh vi phạm</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    placeholder="Ví dụ: Neon Tokyo Girl hoặc đường dẫn /wallpapers/..."
+                    value={reportWpTitle}
+                    onChange={(e) => setReportWpTitle(e.target.value)}
+                    required
+                    className="bg-dark text-white border-secondary"
+                  />
+                </Form.Group>
+                <Form.Group controlId="repReason">
+                  <Form.Label>Lý do báo cáo</Form.Label>
+                  <Form.Select 
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    className="bg-dark text-white border-secondary"
+                  >
+                    <option value="Bản quyền">Vi phạm bản quyền (DMCA Removal)</option>
+                    <option value="Không phù hợp">Nội dung không phù hợp / NSFW</option>
+                    <option value="Link lỗi">Đường dẫn ảnh bị lỗi / Không tải được</option>
+                    <option value="Khác">Lý do khác</option>
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group controlId="repMsg">
+                  <Form.Label>Chi tiết khiếu nại (Không bắt buộc)</Form.Label>
+                  <Form.Control 
+                    as="textarea" 
+                    rows={3} 
+                    placeholder="Mô tả chi tiết để giúp ban quản trị xem xét..."
+                    value={reportMessage}
+                    onChange={(e) => setReportMessage(e.target.value)}
+                    className="bg-dark text-white border-secondary"
+                  />
+                </Form.Group>
+                <div className="d-flex justify-content-end gap-2 mt-2">
+                  <Button variant="secondary" onClick={() => setShowReportModal(false)}>Hủy</Button>
+                  <Button variant="danger" type="submit">Gửi báo cáo</Button>
+                </div>
+              </div>
+            </Form>
+          ) : (
+            <div className="d-flex flex-column gap-3" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+              {submittedReports.length === 0 ? (
+                <div className="text-center py-4 text-white-50">
+                  <p className="mb-0">Bạn chưa gửi yêu cầu xóa ảnh nào.</p>
+                </div>
+              ) : (
+                submittedReports.map((rep) => (
+                  <div key={rep.id} className="p-3 rounded border border-secondary bg-dark-50">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <span className="fw-semibold text-truncate text-white" style={{ maxWidth: '70%', fontSize: '0.9rem' }}>{rep.wallpaperTitle}</span>
+                      <span className="badge bg-warning text-dark" style={{ fontSize: '0.65rem' }}>Chờ duyệt</span>
+                    </div>
+                    <div className="text-white-50 mb-1" style={{ fontSize: '0.8rem' }}>
+                      <strong>Lý do:</strong> {rep.reason}
+                    </div>
+                    {rep.message && (
+                      <div className="text-white-50 mb-2" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                        "{rep.message}"
+                      </div>
+                    )}
+                    <small className="text-muted d-block" style={{ fontSize: '0.7rem' }}>
+                      Đã gửi: {new Date(rep.createdAt).toLocaleString('vi-VN')}
+                    </small>
+                  </div>
+                ))
+              )}
+              <div className="d-flex justify-content-end mt-2">
+                <Button variant="secondary" onClick={() => setShowReportModal(false)}>Đóng</Button>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
       </Modal>
 
       {/* 2. Widget Modal */}
-      <Modal show={showWidgetModal} onHide={() => setShowWidgetModal(false)} centered contentClassName="glass-panel border-secondary text-white shadow-lg">
+      <Modal show={showWidgetModal} onHide={() => setShowWidgetModal(false)} size="lg" centered contentClassName="glass-panel border-secondary text-white shadow-lg">
         <Modal.Header closeButton closeVariant="white" className="border-secondary">
-          <Modal.Title className="fw-bold fs-5">Mã nhúng Widget hình nền</Modal.Title>
+          <Modal.Title className="fw-bold fs-5">Tùy biến & Tạo Widget nhúng</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="d-flex flex-column gap-3">
-          <p className="text-white-50 mb-1" style={{ fontSize: '0.85rem' }}>Sao chép mã HTML dưới đây để nhúng widget trình chiếu hình nền ngẫu nhiên lên trang web hoặc blog của bạn:</p>
-          <Form.Control 
-            as="textarea"
-            readOnly
-            rows={3}
-            value={`<iframe src="http://localhost:3000/widget" width="100%" height="450" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`}
-            className="bg-dark text-info border-secondary font-monospace"
-            style={{ fontSize: '0.8rem' }}
-          />
-          <Button 
-            variant="primary" 
-            onClick={() => {
-              navigator.clipboard.writeText(`<iframe src="http://localhost:3000/widget" width="100%" height="450" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`);
-              alert("Đã sao chép mã nhúng thành công!");
-            }}
-          >
-            Sao chép mã nhúng
-          </Button>
+        <Modal.Body className="py-3">
+          <Row>
+            {/* Customizer form */}
+            <Col lg={6} className="d-flex flex-column gap-3 mb-3 mb-lg-0 border-end border-secondary pe-lg-4">
+              <h6 className="text-primary fw-bold mb-2">Thiết lập Widget</h6>
+              
+              <Form.Group controlId="widCat">
+                <Form.Label style={{ fontSize: '0.85rem' }}>Danh mục ảnh hiển thị</Form.Label>
+                <Form.Select 
+                  value={widgetCategory}
+                  onChange={(e) => setWidgetCategory(e.target.value)}
+                  className="bg-dark text-white border-secondary"
+                >
+                  <option value="all">Tất cả hình nền ngẫu nhiên</option>
+                  <option value="love-couple">Love / Couple</option>
+                  <option value="oregairu">Oregairu</option>
+                  <option value="yugioh">Yu-Gi-Oh!</option>
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group controlId="widTheme">
+                <Form.Label style={{ fontSize: '0.85rem' }}>Tông màu viền</Form.Label>
+                <Form.Select 
+                  value={widgetTheme}
+                  onChange={(e) => setWidgetTheme(e.target.value)}
+                  className="bg-dark text-white border-secondary"
+                >
+                  <option value="pink">Sakura Pink</option>
+                  <option value="purple">Lan Orchid Purple</option>
+                  <option value="blue">Cyber Blue</option>
+                </Form.Select>
+              </Form.Group>
+
+              <Row>
+                <Col>
+                  <Form.Group controlId="widW">
+                    <Form.Label style={{ fontSize: '0.85rem' }}>Chiều rộng (px)</Form.Label>
+                    <Form.Control 
+                      type="number"
+                      value={widgetWidth}
+                      onChange={(e) => setWidgetWidth(Number(e.target.value))}
+                      className="bg-dark text-white border-secondary"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="widH">
+                    <Form.Label style={{ fontSize: '0.85rem' }}>Chiều cao (px)</Form.Label>
+                    <Form.Control 
+                      type="number"
+                      value={widgetHeight}
+                      onChange={(e) => setWidgetHeight(Number(e.target.value))}
+                      className="bg-dark text-white border-secondary"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <div className="mt-2">
+                <Form.Label style={{ fontSize: '0.85rem' }}>Mã HTML nhúng trang web:</Form.Label>
+                <Form.Control 
+                  as="textarea"
+                  readOnly
+                  rows={3}
+                  value={`<iframe src="http://localhost:3000/widget?category=${widgetCategory}&theme=${widgetTheme}" width="${widgetWidth}" height="${widgetHeight}" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`}
+                  className="bg-dark text-info border-secondary font-monospace"
+                  style={{ fontSize: '0.75rem' }}
+                />
+              </div>
+
+              <Button 
+                variant="primary"
+                onClick={() => {
+                  navigator.clipboard.writeText(`<iframe src="http://localhost:3000/widget?category=${widgetCategory}&theme=${widgetTheme}" width="${widgetWidth}" height="${widgetHeight}" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`);
+                  alert("Đã sao chép mã nhúng thành công!");
+                }}
+              >
+                Sao chép mã nhúng
+              </Button>
+            </Col>
+
+            {/* Live Preview Column */}
+            <Col lg={6} className="d-flex flex-column align-items-center justify-content-center text-center">
+              <h6 className="text-primary fw-bold mb-3 w-100 text-start">Xem trước Widget</h6>
+              
+              {/* Mock Widget component container */}
+              <div 
+                className="rounded border shadow-lg bg-dark d-flex flex-column justify-content-between p-3"
+                style={{
+                  width: '260px',
+                  height: '320px',
+                  borderWidth: '2px',
+                  borderColor: 
+                    widgetTheme === 'pink' ? '#ff85a2' : 
+                    widgetTheme === 'purple' ? '#b5179e' : '#00b4d8',
+                  boxShadow: `0 8px 20px ${
+                    widgetTheme === 'pink' ? 'rgba(255, 133, 162, 0.25)' : 
+                    widgetTheme === 'purple' ? 'rgba(181, 23, 158, 0.25)' : 'rgba(0, 180, 216, 0.25)'
+                  }`
+                }}
+              >
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <small className="fw-bold" style={{ fontSize: '0.7rem', color: widgetTheme === 'pink' ? '#ff85a2' : widgetTheme === 'purple' ? '#b5179e' : '#00b4d8' }}>
+                    {widgetCategory === 'all' ? 'RANDOM WALLPAPERS' : widgetCategory.toUpperCase()}
+                  </small>
+                  <span className="badge bg-danger" style={{ fontSize: '0.55rem' }}>Live</span>
+                </div>
+                
+                {/* Mock image */}
+                <div className="flex-grow-1 rounded mb-2 overflow-hidden position-relative bg-secondary-subtle">
+                  <img 
+                    src={
+                      widgetCategory === 'love-couple' ? 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500' :
+                      widgetCategory === 'yugioh' ? 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500' : 
+                      'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500'
+                    }
+                    alt="Widget Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div className="position-absolute bottom-0 start-0 p-2 text-start w-100 bg-dark-50" style={{ fontSize: '0.7rem' }}>
+                    <div className="text-white fw-bold text-truncate" style={{ fontSize: '0.75rem' }}>Ảnh xem trước Widget</div>
+                    <div className="text-white-50 text-truncate" style={{ fontSize: '0.65rem' }}>Anime Wallpaper Hub</div>
+                  </div>
+                </div>
+
+                <Button 
+                  size="sm" 
+                  className="w-100"
+                  style={{
+                    backgroundColor: 
+                      widgetTheme === 'pink' ? '#ff85a2' : 
+                      widgetTheme === 'purple' ? '#b5179e' : '#00b4d8',
+                    border: 'none',
+                    fontSize: '0.75rem'
+                  }}
+                  onClick={() => alert("Đây là phiên bản xem trước của widget!")}
+                >
+                  Tải ngay
+                </Button>
+              </div>
+              <small className="text-white-50 mt-3 d-block" style={{ fontSize: '0.75rem' }}>
+                * Kích thước thực tế sẽ co giãn theo thông số nhúng của bạn.
+              </small>
+            </Col>
+          </Row>
         </Modal.Body>
         <Modal.Footer className="border-secondary">
           <Button variant="secondary" onClick={() => setShowWidgetModal(false)}>Đóng</Button>
