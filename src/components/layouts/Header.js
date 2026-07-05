@@ -5,6 +5,7 @@ import Navbar from 'react-bootstrap/Navbar';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
+import Offcanvas from 'react-bootstrap/Offcanvas';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SettingsContext } from '../../contexts/SettingsContext';
@@ -572,88 +573,224 @@ function Header() {
         </Modal.Footer>
       </Modal>
 
-      {/* Settings Modal */}
-      <Modal show={showSettingsModal} onHide={() => setShowSettingsModal(false)} centered contentClassName="glass-panel border-secondary text-white shadow-lg">
-        <Modal.Header closeButton closeVariant="white" className="border-secondary">
-          <Modal.Title className="d-flex align-items-center gap-2">
-            <Settings size={22} className="text-primary" /> Cài đặt giao diện
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="d-flex flex-column gap-4 py-4">
-          {/* 1. Falling Sakura Petals Toggle */}
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h6 className="mb-0 text-white">Hiệu ứng Hoa anh đào rơi</h6>
-              <small className="text-white-50">Bật/Tắt hiệu ứng cánh hoa rơi trên nền trang web</small>
+      {/* Settings & Support Offcanvas (Slide-out menu matching Pinterest) */}
+      <Offcanvas 
+        show={showSettingsModal} 
+        onHide={() => setShowSettingsModal(false)} 
+        placement="end"
+        className="glass-panel text-white border-start border-secondary shadow-lg"
+        style={{ width: '380px' }}
+      >
+        <Offcanvas.Header closeButton closeVariant="white" className="border-bottom border-secondary">
+          <Offcanvas.Title className="fw-bold d-flex align-items-center gap-2" style={{ color: 'var(--sakura-primary, #ff85a2)' }}>
+            <Settings size={22} /> Cài đặt & Hỗ trợ
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        
+        <Offcanvas.Body className="d-flex flex-column gap-4 py-4" style={{ overflowY: 'auto' }}>
+          {/* Section 1: Cài đặt Giao diện */}
+          <div>
+            <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+              Cài đặt giao diện
+            </h6>
+            <div className="d-flex flex-column gap-3">
+              {/* Sakura Falling */}
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <div className="fw-semibold">Cánh hoa anh đào rơi</div>
+                  <small className="text-white-50" style={{ fontSize: '0.75rem' }}>Bật/Tắt cánh hoa rơi trên màn hình</small>
+                </div>
+                <Form.Check 
+                  type="switch"
+                  id="sakura-switch"
+                  checked={sakuraEnabled}
+                  onChange={(e) => setSakuraEnabled(e.target.checked)}
+                  className="fs-5"
+                />
+              </div>
+
+              {/* Sharpen Filter */}
+              <div className="d-flex justify-content-between align-items-center border-top border-secondary-subtle pt-3">
+                <div>
+                  <div className="fw-semibold">Làm nét ảnh cực đại</div>
+                  <small className="text-white-50" style={{ fontSize: '0.75rem' }}>Bật/Tắt bộ lọc nét tối ưu hình nền</small>
+                </div>
+                <Form.Check 
+                  type="switch"
+                  id="sharpen-switch"
+                  checked={sharpenEnabled}
+                  onChange={(e) => setSharpenEnabled(e.target.checked)}
+                  className="fs-5"
+                />
+              </div>
+
+              {/* Theme Selector */}
+              <div className="border-top border-secondary-subtle pt-3">
+                <div className="fw-semibold mb-2">Tông màu chủ đạo</div>
+                <div className="d-flex gap-2 flex-wrap">
+                  <Button 
+                    size="sm"
+                    variant={accentColor === 'pink' ? 'primary' : 'outline-secondary'}
+                    onClick={() => setAccentColor('pink')}
+                    className="d-flex align-items-center gap-1 text-white border-secondary"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ff85a2' }} />
+                    Hồng Sakura
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant={accentColor === 'purple' ? 'primary' : 'outline-secondary'}
+                    onClick={() => setAccentColor('purple')}
+                    className="d-flex align-items-center gap-1 text-white border-secondary"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#b5179e' }} />
+                    Tím Thạch Lan
+                  </Button>
+                  <Button 
+                    size="sm"
+                    variant={accentColor === 'blue' ? 'primary' : 'outline-secondary'}
+                    onClick={() => setAccentColor('blue')}
+                    className="d-flex align-items-center gap-1 text-white border-secondary"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#00b4d8' }} />
+                    Xanh Cyber
+                  </Button>
+                </div>
+              </div>
             </div>
-            <Form.Check 
-              type="switch"
-              id="sakura-switch"
-              checked={sakuraEnabled}
-              onChange={(e) => setSakuraEnabled(e.target.checked)}
-              className="fs-5"
-            />
           </div>
 
-          {/* 2. Sharpen Filters Toggle */}
-          <div className="d-flex justify-content-between align-items-center border-top border-secondary pt-3">
-            <div>
-              <h6 className="mb-0 text-white">Tự động làm nét ảnh cực đại</h6>
-              <small className="text-white-50">Bật/Tắt bộ lọc làm nét cho toàn bộ hình nền</small>
-            </div>
-            <Form.Check 
-              type="switch"
-              id="sharpen-switch"
-              checked={sharpenEnabled}
-              onChange={(e) => setSharpenEnabled(e.target.checked)}
-              className="fs-5"
-            />
-          </div>
-
-          {/* 3. Theme Color Selection */}
+          {/* Section 2: Tinh chỉnh & Liên kết */}
           <div className="border-top border-secondary pt-3">
-            <h6 className="mb-2 text-white">Tông màu giao diện chủ đạo</h6>
-            <small className="text-white-50 d-block mb-3">Chọn màu sắc điểm nhấn và hiệu ứng màu hoa rơi tương ứng</small>
-            <div className="d-flex gap-3 justify-content-center">
-              {/* Pink Sakura button */}
-              <Button 
-                variant={accentColor === 'pink' ? 'primary' : 'outline-primary'}
-                className="px-3 py-2 d-flex align-items-center gap-2"
-                onClick={() => setAccentColor('pink')}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ff85a2' }} />
-                Hồng Sakura
-              </Button>
+            <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+              Tinh chỉnh & Liên kết
+            </h6>
+            <ul className="list-unstyled d-flex flex-column gap-3 mb-0" style={{ fontSize: '0.9rem' }}>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Đang tinh chỉnh đề xuất theo sở thích của bạn...")}
+                >
+                  <span>Tinh chỉnh đề xuất của bạn</span>
+                </span>
+              </li>
+              <li>
+                <a 
+                  href="https://pinterest.com" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between text-decoration-none"
+                >
+                  <span>Liên kết đến Pinterest</span>
+                </a>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Mở cổng báo cáo vi phạm bản quyền / hình ảnh...")}
+                >
+                  <span>Cổng thông tin báo cáo vi phạm</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Tải xuống và cài đặt ứng dụng Desktop Windows...")}
+                >
+                  <span>Cài đặt ứng dụng Windows</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Đăng ký chương trình người thử nghiệm beta...")}
+                >
+                  <span className="d-flex align-items-center gap-2">Làm người thử nghiệm beta <X size={12} style={{ transform: 'rotate(45deg)' }} /></span>
+                </span>
+              </li>
+            </ul>
+          </div>
 
-              {/* Purple Wisteria button */}
-              <Button 
-                variant={accentColor === 'purple' ? 'primary' : 'outline-primary'}
-                className="px-3 py-2 d-flex align-items-center gap-2"
-                onClick={() => setAccentColor('purple')}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#b5179e' }} />
-                Tím Thạch Lan
-              </Button>
+          {/* Section 3: Hỗ trợ */}
+          <div className="border-top border-secondary pt-3">
+            <h6 className="text-uppercase text-white-50 fw-bold mb-3" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+              Hỗ trợ
+            </h6>
+            <ul className="list-unstyled d-flex flex-column gap-3 mb-0" style={{ fontSize: '0.9rem' }}>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Mở trung tâm trợ giúp người dùng...")}
+                >
+                  <span>Trung tâm trợ giúp</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Tạo mã nhúng widget trang web...")}
+                >
+                  <span>Tạo widget</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Mở danh sách các hình ảnh yêu cầu xóa...")}
+                >
+                  <span>Lượt xóa</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Cài đặt quảng cáo cá nhân hóa của bạn...")}
+                >
+                  <span>Quảng cáo Cá nhân hóa</span>
+                </span>
+              </li>
+              <li>
+                <span 
+                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => alert("Cài đặt quyền riêng tư...")}
+                >
+                  <span>Quyền riêng tư của bạn</span>
+                </span>
+              </li>
+            </ul>
+          </div>
 
-              {/* Blue Cyber button */}
-              <Button 
-                variant={accentColor === 'blue' ? 'primary' : 'outline-primary'}
-                className="px-3 py-2 d-flex align-items-center gap-2"
-                onClick={() => setAccentColor('blue')}
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#00b4d8' }} />
-                Xanh Cyber
-              </Button>
+          {/* Section 4: Tài nguyên */}
+          <div className="border-top border-secondary pt-3 mt-auto">
+            <div className="d-flex flex-wrap gap-2 text-white-50" style={{ fontSize: '0.75rem' }}>
+              <a href="#about" className="text-decoration-none text-white-50 hover-text-white">Giới thiệu</a>
+              <span>•</span>
+              <a href="#press" className="text-decoration-none text-white-50 hover-text-white">Báo chí</a>
+              <span>•</span>
+              <a href="#biz" className="text-decoration-none text-white-50 hover-text-white">Doanh nghiệp</a>
+              <span>•</span>
+              <a href="#careers" className="text-decoration-none text-white-50 hover-text-white">Nghề nghiệp</a>
+              <span>•</span>
+              <a href="#devs" className="text-decoration-none text-white-50 hover-text-white">Nhà phát triển</a>
+            </div>
+            <div className="text-muted mt-2" style={{ fontSize: '0.7rem' }}>
+              © 2026 AnimeWallpaper Inc.
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer className="border-secondary">
-          <Button variant="primary" onClick={() => setShowSettingsModal(false)}>Đóng cài đặt</Button>
-        </Modal.Footer>
-      </Modal>
+        </Offcanvas.Body>
+      </Offcanvas>
     </>
   );
 }
