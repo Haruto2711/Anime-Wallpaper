@@ -1,7 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Button from 'react-bootstrap/Button';
@@ -847,15 +845,7 @@ function Header() {
                   <span>Cổng thông tin báo cáo vi phạm</span>
                 </span>
               </li>
-              <li>
-                <span 
-                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => alert("Ứng dụng Windows PWA Desktop: Bạn có thể cài đặt bằng cách nhấn biểu tượng Cài đặt (App Install) ở thanh địa chỉ trình duyệt Chrome/Edge của bạn!")}
-                >
-                  <span>Cài đặt ứng dụng Windows</span>
-                </span>
-              </li>
+
               <li className="d-flex justify-content-between align-items-center">
                 <div>
                   <span className="text-light-50">Làm người thử nghiệm beta</span>
@@ -922,20 +912,8 @@ function Header() {
             </ul>
           </div>
 
-          {/* Section 5: Tài nguyên */}
-          <div className="border-top border-secondary pt-3 mt-auto">
-            <div className="d-flex flex-wrap gap-2 text-white-50" style={{ fontSize: '0.75rem' }}>
-              <a href="#about" className="text-decoration-none text-white-50 hover-text-white">Giới thiệu</a>
-              <span>•</span>
-              <a href="#press" className="text-decoration-none text-white-50 hover-text-white">Báo chí</a>
-              <span>•</span>
-              <a href="#biz" className="text-decoration-none text-white-50 hover-text-white">Doanh nghiệp</a>
-              <span>•</span>
-              <a href="#careers" className="text-decoration-none text-white-50 hover-text-white">Nghề nghiệp</a>
-              <span>•</span>
-              <a href="#devs" className="text-decoration-none text-white-50 hover-text-white">Nhà phát triển</a>
-            </div>
-            <div className="text-muted mt-2" style={{ fontSize: '0.7rem' }}>
+          <div className="border-top border-secondary pt-3 mt-auto text-center">
+            <div className="text-muted" style={{ fontSize: '0.75rem' }}>
               © 2026 AnimeWallpaper Inc.
             </div>
           </div>
