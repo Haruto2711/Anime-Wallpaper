@@ -36,7 +36,6 @@ function Header() {
   });
 
   const [showReportModal, setShowReportModal] = useState(false);
-  const [showWidgetModal, setShowWidgetModal] = useState(false);
   const [showFaqModal, setShowFaqModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
@@ -56,27 +55,6 @@ function Header() {
   const [adsEnabled, setAdsEnabled] = useState(() => {
     return localStorage.getItem('personalized_ads') !== 'false';
   });
-
-  // Widget customizer states
-  const [widgetWidth, setWidgetWidth] = useState(350);
-  const [widgetHeight, setWidgetHeight] = useState(450);
-  const [widgetCategory, setWidgetCategory] = useState('all');
-  const [widgetTheme, setWidgetTheme] = useState('pink');
-  const [widgetSizePreset, setWidgetSizePreset] = useState('medium');
-
-  const handleWidgetPresetChange = (preset) => {
-    setWidgetSizePreset(preset);
-    if (preset === 'small') {
-      setWidgetWidth(300);
-      setWidgetHeight(400);
-    } else if (preset === 'medium') {
-      setWidgetWidth(350);
-      setWidgetHeight(450);
-    } else if (preset === 'large') {
-      setWidgetWidth(400);
-      setWidgetHeight(500);
-    }
-  };
 
   useEffect(() => {
     fetch('http://localhost:4000/categories')
@@ -909,15 +887,7 @@ function Header() {
                   <span>Trung tâm trợ giúp (FAQ)</span>
                 </span>
               </li>
-              <li>
-                <span 
-                  className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => { setShowWidgetModal(true); setShowSettingsModal(false); }}
-                >
-                  <span>Tạo widget nhúng</span>
-                </span>
-              </li>
+
               <li>
                 <span 
                   className="text-light-50 hover-text-white d-flex align-items-center justify-content-between" 
@@ -1066,180 +1036,7 @@ function Header() {
         </Modal.Body>
       </Modal>
 
-      {/* 2. Widget Modal */}
-      <Modal show={showWidgetModal} onHide={() => setShowWidgetModal(false)} size="lg" centered contentClassName="glass-panel border-secondary text-white shadow-lg">
-        <Modal.Header closeButton closeVariant="white" className="border-secondary">
-          <Modal.Title className="fw-bold fs-5">Tùy biến & Tạo Widget nhúng</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="py-3">
-          <Row>
-            {/* Customizer form */}
-            <Col lg={6} className="d-flex flex-column gap-3 mb-3 mb-lg-0 border-end border-secondary pe-lg-4">
-              <h6 className="text-primary fw-bold mb-2">Thiết lập Widget</h6>
-              
-              <Form.Group controlId="widCat">
-                <Form.Label style={{ fontSize: '0.85rem' }}>Danh mục ảnh hiển thị</Form.Label>
-                <Form.Select 
-                  value={widgetCategory}
-                  onChange={(e) => setWidgetCategory(e.target.value)}
-                  className="bg-dark text-white border-secondary"
-                >
-                  <option value="all">Tất cả hình nền ngẫu nhiên</option>
-                  <option value="love-couple">Love / Couple</option>
-                  <option value="oregairu">Oregairu</option>
-                  <option value="yugioh">Yu-Gi-Oh!</option>
-                </Form.Select>
-              </Form.Group>
 
-              <Form.Group controlId="widTheme">
-                <Form.Label style={{ fontSize: '0.85rem' }}>Tông màu viền</Form.Label>
-                <Form.Select 
-                  value={widgetTheme}
-                  onChange={(e) => setWidgetTheme(e.target.value)}
-                  className="bg-dark text-white border-secondary"
-                >
-                  <option value="pink">Sakura Pink</option>
-                  <option value="purple">Lan Orchid Purple</option>
-                  <option value="blue">Cyber Blue</option>
-                </Form.Select>
-              </Form.Group>
-
-              <Form.Group controlId="widSizePreset">
-                <Form.Label style={{ fontSize: '0.85rem' }}>Kích thước hiển thị Widget</Form.Label>
-                <Form.Select 
-                  value={widgetSizePreset}
-                  onChange={(e) => handleWidgetPresetChange(e.target.value)}
-                  className="bg-dark text-white border-secondary"
-                >
-                  <option value="small">Nhỏ (300 x 400 pixel)</option>
-                  <option value="medium">Trung bình (350 x 450 pixel) [Khuyên dùng]</option>
-                  <option value="large">Lớn (400 x 500 pixel)</option>
-                  <option value="custom">Tự tùy chỉnh kích thước</option>
-                </Form.Select>
-              </Form.Group>
-
-              {widgetSizePreset === 'custom' && (
-                <Row className="mt-2 animate-fade-in">
-                  <Col>
-                    <Form.Group controlId="widW">
-                      <Form.Label style={{ fontSize: '0.8rem' }}>Chiều rộng (pixel)</Form.Label>
-                      <Form.Control 
-                        type="number"
-                        value={widgetWidth}
-                        onChange={(e) => setWidgetWidth(Number(e.target.value))}
-                        className="bg-dark text-white border-secondary"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col>
-                    <Form.Group controlId="widH">
-                      <Form.Label style={{ fontSize: '0.8rem' }}>Chiều cao (pixel)</Form.Label>
-                      <Form.Control 
-                        type="number"
-                        value={widgetHeight}
-                        onChange={(e) => setWidgetHeight(Number(e.target.value))}
-                        className="bg-dark text-white border-secondary"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <div className="text-white-50 mt-1 d-block" style={{ fontSize: '0.75rem' }}>
-                    * Pixel (viết tắt là px) là các điểm ảnh đo đạc kích thước hiển thị trên trang web của bạn.
-                  </div>
-                </Row>
-              )}
-
-              <div className="mt-2">
-                <Form.Label style={{ fontSize: '0.85rem' }}>Mã HTML nhúng trang web:</Form.Label>
-                <Form.Control 
-                  as="textarea"
-                  readOnly
-                  rows={3}
-                  value={`<iframe src="http://localhost:3000/widget?category=${widgetCategory}&theme=${widgetTheme}" width="${widgetWidth}" height="${widgetHeight}" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`}
-                  className="bg-dark text-info border-secondary font-monospace"
-                  style={{ fontSize: '0.75rem' }}
-                />
-              </div>
-
-              <Button 
-                variant="primary"
-                onClick={() => {
-                  navigator.clipboard.writeText(`<iframe src="http://localhost:3000/widget?category=${widgetCategory}&theme=${widgetTheme}" width="${widgetWidth}" height="${widgetHeight}" style="border:none;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25)" allow="fullscreen"></iframe>`);
-                  alert("Đã sao chép mã nhúng thành công!");
-                }}
-              >
-                Sao chép mã nhúng
-              </Button>
-            </Col>
-
-            {/* Live Preview Column */}
-            <Col lg={6} className="d-flex flex-column align-items-center justify-content-center text-center">
-              <h6 className="text-primary fw-bold mb-3 w-100 text-start">Xem trước Widget</h6>
-              
-              {/* Mock Widget component container */}
-              <div 
-                className="rounded border shadow-lg bg-dark d-flex flex-column justify-content-between p-3"
-                style={{
-                  width: '260px',
-                  height: '320px',
-                  borderWidth: '2px',
-                  borderColor: 
-                    widgetTheme === 'pink' ? '#ff85a2' : 
-                    widgetTheme === 'purple' ? '#b5179e' : '#00b4d8',
-                  boxShadow: `0 8px 20px ${
-                    widgetTheme === 'pink' ? 'rgba(255, 133, 162, 0.25)' : 
-                    widgetTheme === 'purple' ? 'rgba(181, 23, 158, 0.25)' : 'rgba(0, 180, 216, 0.25)'
-                  }`
-                }}
-              >
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <small className="fw-bold" style={{ fontSize: '0.7rem', color: widgetTheme === 'pink' ? '#ff85a2' : widgetTheme === 'purple' ? '#b5179e' : '#00b4d8' }}>
-                    {widgetCategory === 'all' ? 'RANDOM WALLPAPERS' : widgetCategory.toUpperCase()}
-                  </small>
-                  <span className="badge bg-danger" style={{ fontSize: '0.55rem' }}>Live</span>
-                </div>
-                
-                {/* Mock image */}
-                <div className="flex-grow-1 rounded mb-2 overflow-hidden position-relative bg-secondary-subtle">
-                  <img 
-                    src={
-                      widgetCategory === 'love-couple' ? 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500' :
-                      widgetCategory === 'yugioh' ? 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500' : 
-                      'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500'
-                    }
-                    alt="Widget Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div className="position-absolute bottom-0 start-0 p-2 text-start w-100 bg-dark-50" style={{ fontSize: '0.7rem' }}>
-                    <div className="text-white fw-bold text-truncate" style={{ fontSize: '0.75rem' }}>Ảnh xem trước Widget</div>
-                    <div className="text-white-50 text-truncate" style={{ fontSize: '0.65rem' }}>Anime Wallpaper Hub</div>
-                  </div>
-                </div>
-
-                <Button 
-                  size="sm" 
-                  className="w-100"
-                  style={{
-                    backgroundColor: 
-                      widgetTheme === 'pink' ? '#ff85a2' : 
-                      widgetTheme === 'purple' ? '#b5179e' : '#00b4d8',
-                    border: 'none',
-                    fontSize: '0.75rem'
-                  }}
-                  onClick={() => alert("Đây là phiên bản xem trước của widget!")}
-                >
-                  Tải ngay
-                </Button>
-              </div>
-              <small className="text-white-50 mt-3 d-block" style={{ fontSize: '0.75rem' }}>
-                * Kích thước thực tế sẽ co giãn theo thông số nhúng của bạn.
-              </small>
-            </Col>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer className="border-secondary">
-          <Button variant="secondary" onClick={() => setShowWidgetModal(false)}>Đóng</Button>
-        </Modal.Footer>
-      </Modal>
 
       {/* 3. FAQ Modal */}
       <Modal show={showFaqModal} onHide={() => setShowFaqModal(false)} centered size="lg" contentClassName="glass-panel border-secondary text-white shadow-lg">
