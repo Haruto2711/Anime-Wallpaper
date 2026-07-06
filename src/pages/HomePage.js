@@ -102,12 +102,14 @@ function HomePage({ favorites, onToggleFavorite }) {
       {!loadingBanner && featuredWallpapers.length > 0 && (
         <Carousel className="mb-5 border-bottom border-secondary shadow">
           {featuredWallpapers.map((wp) => (
-            <Carousel.Item key={wp.id} style={{ height: '400px' }}>
+            <Carousel.Item key={wp.id}>
               <img
-                className="d-block w-100 h-100"
+                className="d-block w-100"
                 src={process.env.PUBLIC_URL + wp.imageUrl}
                 alt={wp.title}
                 style={{ 
+                  height: 'auto',
+                  maxHeight: '550px',
                   objectFit: 'cover', 
                   objectPosition: getBannerPosition(wp.imageUrl), 
                   filter: 'brightness(0.6)' 
